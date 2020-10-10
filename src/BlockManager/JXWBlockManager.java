@@ -1,5 +1,6 @@
 package BlockManager;
 
+import ErrorManager.ErrorLog;
 import Id.Id;
 
 import java.io.*;
@@ -29,14 +30,13 @@ public class JXWBlockManager implements BlockManager {
 
     JXWBlockManager(){
         BlockManagerNum = BlockManagerNumCount++;
-        String root = "../../output/BlockManagers/";
+        String root = "./output/BlockManagers/";
 
         //创建BlockManager的目录
-        File file = new File(root + "FM-" + BlockManagerNum);
+        File file = new File(root + "BM-" + BlockManagerNum);
         if (!file.exists()){//目录不存在
-            if (!file.mkdir()){//创建目录不成功
-                //Todo
-                //输出到日志
+            if (!file.mkdir()){//创建目录不成功，记录在日志里面
+                ErrorLog.logErrorMessage("BlockManager-" + BlockManagerNum + "目录创建失败");
             }
         }
     }
@@ -64,19 +64,14 @@ public class JXWBlockManager implements BlockManager {
     }
 
     /**
-     * 获得这个BlockId对应的Block
+     * 获得这个Id对应的Block
      * @param indexId Block的Id
      * @return 对应的Block
      */
     @Override
     public Block getBlock(Id indexId){
-        int Num = indexId.getNum();
-        int ManagerNum = indexId.getManagerNum();
-
         for (JXWBlock block : BlockList){
-            int blockNum = block.getIndexId().getNum();
-            int blockManagerNum = block.getIndexId().getManagerNum();
-            if (blockManagerNum == ManagerNum && blockNum == Num){
+            if (block.getIndexId().equals(indexId)){
                 return block;
             }
         }

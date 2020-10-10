@@ -23,7 +23,7 @@ public class JXWBlockId implements Id {
     public JXWBlockId(int blockManagerNum, int blockNum) {
         BlockManagerNum = blockManagerNum;
         BlockNum = blockNum;
-        String root = "../../output/BlockManagers/";//Block文件输出的默认根目录
+        String root = "./output/BlockManagers/";//Block文件输出的默认根目录
         BlockMetaPath = root + "BM-" + blockManagerNum + "/" + "b-" + blockNum + ".meta";
         BlockDataPath = root + "BM-" + blockManagerNum + "/" + "b-" + blockNum + ".data";
     }
@@ -36,6 +36,15 @@ public class JXWBlockId implements Id {
     @Override
     public int getNum() {
         return BlockNum;
+    }
+
+    /**
+     * indexId是否与此Id相等
+     * @return 相等返回true，不相等返回false
+     */
+    @Override
+    public boolean equals(Id indexId) {
+        return indexId instanceof JXWBlockId && indexId.getManagerNum() == BlockManagerNum && indexId.getNum() == BlockNum;
     }
 
     @Override
