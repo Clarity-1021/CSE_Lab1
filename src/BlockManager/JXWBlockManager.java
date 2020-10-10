@@ -19,14 +19,14 @@ public class JXWBlockManager implements BlockManager {
     private int BlockManagerNum;
 
     /**
-     * BlockManager的编号
+     * 新建下一个Block的编号
      */
     private int BlockNumCount = 1;
 
     /**
      * 此BlockManager保有的Block
      */
-    private List<JXWBlock> BlockList = new ArrayList<>();
+    private List<Block> BlockList = new ArrayList<>();
 
     JXWBlockManager(){
         BlockManagerNum = BlockManagerNumCount++;
@@ -58,9 +58,9 @@ public class JXWBlockManager implements BlockManager {
      */
     @Override
     public Block newBlock(byte[] b) {
-        JXWBlock newEmptyBlock = new JXWBlock(this, b);
-        BlockList.add(newEmptyBlock);
-        return newEmptyBlock;
+        JXWBlock newBlock = new JXWBlock(this, b);
+        BlockList.add(newBlock);
+        return newBlock;
     }
 
     /**
@@ -70,7 +70,7 @@ public class JXWBlockManager implements BlockManager {
      */
     @Override
     public Block getBlock(Id indexId){
-        for (JXWBlock block : BlockList){
+        for (Block block : BlockList){
             if (block.getIndexId().equals(indexId)){
                 return block;
             }
