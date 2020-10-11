@@ -86,7 +86,7 @@ public class JXWBlockManager implements BlockManager {
      */
     @Override
     public Block newEmptyBlock(int blockSize) {
-        JXWBlock newEmptyBlock = new JXWBlock(this, blockSize);
+        Block newEmptyBlock = new JXWBlock(this, blockSize);
         BlockList.add(newEmptyBlock);
         return newEmptyBlock;
     }

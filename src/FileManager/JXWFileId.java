@@ -4,9 +4,9 @@ import Id.Id;
 
 public class JXWFileId implements Id {
     /**
-     * File的FileManager的编号
+     * File的FileManager
      */
-    private int FileManagerNum;
+    private FileManager FileManager;
     /**
      * File的编号
      */
@@ -16,16 +16,20 @@ public class JXWFileId implements Id {
      */
     private String FileMetaPath;
 
-    public JXWFileId(int blockManagerNum, int blockNum) {
-        FileManagerNum = blockManagerNum;
-        FileNum = blockNum;
+    public JXWFileId(FileManager fileManager) {
+        FileManager = fileManager;
+        FileNum = fileManager.getFileManagerNum();
         String root = "./output/FileManagers/";//Block文件输出的默认根目录
-        FileMetaPath = root + "FM-" + blockManagerNum + "/" + "f-" + blockNum + ".meta";
+        FileMetaPath = root + "FM-" + getManagerNum() + "/" + "f-" + FileNum + ".meta";
+    }
+
+    public FileManager getFileManager() {
+        return FileManager;
     }
 
     @Override
     public int getManagerNum() {
-        return FileManagerNum;
+        return FileManager.getFileManagerNum();
     }
 
     @Override
@@ -39,16 +43,11 @@ public class JXWFileId implements Id {
      */
     @Override
     public boolean equals(Id indexId) {
-        return indexId instanceof JXWFileId && indexId.getManagerNum() == FileManagerNum && indexId.getNum() == FileNum;
+        return indexId instanceof JXWFileId && indexId.getManagerNum() == getManagerNum() && indexId.getNum() == FileNum;
     }
 
     @Override
     public String getMetaPath() {
         return FileMetaPath;
-    }
-
-    @Override
-    public String getDataPath() {
-        return null;
     }
 }

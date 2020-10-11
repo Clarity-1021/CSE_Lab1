@@ -5,5 +5,4 @@ public interface Id {
     int getNum();
     boolean equals(Id indexId);
     String getMetaPath();
-    String getDataPath();
 }

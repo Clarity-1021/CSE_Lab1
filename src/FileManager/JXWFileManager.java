@@ -1,6 +1,6 @@
 package FileManager;
 
-import BlockManager.JXWBlock;
+import ErrorManager.ErrorLog;
 import Id.Id;
 
 import java.util.ArrayList;
@@ -18,15 +18,27 @@ public class JXWFileManager implements FileManager {
     private int FileManagerNum;
 
     /**
-     * 新建下一个File的编号
-     */
-    private int FileNumCount = 1;
-
-    /**
      * 此FileManager保有的File
      */
     private List<File> FileList = new ArrayList<>();
 
+    JXWFileManager(){
+        FileManagerNum = FileManagerNumCount++;
+        String root = "./output/FileManagers/";
+
+        //创建BlockManager的目录
+        java.io.File file = new java.io.File(root + "FM-" + FileManagerNum);
+        if (!file.exists()){//目录不存在
+            if (!file.mkdir()){//创建目录不成功，记录在日志里面
+                ErrorLog.logErrorMessage("FileManager-" + FileManagerNum + "目录创建失败");
+            }
+        }
+    }
+
+    @Override
+    public int getFileManagerNum() {
+        return FileManagerNum;
+    }
 
     /**
      * 获得这个Id对应的File
@@ -44,9 +56,15 @@ public class JXWFileManager implements FileManager {
         return null;
     }
 
-
+    /**
+     * 在此FileManager下面新增新的File
+     * @param fileId File的Id
+     * @return FileId给定的新的File
+     */
     @Override
     public File newFile(Id fileId) {
-        return null;
+        File newFile = new JXWFile(fileId);
+        FileList.add(newFile);
+        return newFile;
     }
 }

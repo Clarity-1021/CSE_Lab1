@@ -13,7 +13,7 @@ public class JXWBlock implements Block {
     /**
      * Block的Id
      */
-    private Id BlockId;
+    private JXWBlockId BlockId;
 
     /**
      * Block的BlockManager
@@ -37,7 +37,7 @@ public class JXWBlock implements Block {
     JXWBlock(BlockManager blockManager, int blockSize){
         BlockManager = blockManager;
         BlockSize = blockSize;
-        BlockId = new JXWBlockId(BlockManager.getBlockManagerNum(), BlockManager.getBlockNumCount());
+        BlockId = new JXWBlockId(BlockManager);
 
         //创建并把信息写入meta文件
         writeBlockMeta(BlockSize, 0, BlockId.getMetaPath());
@@ -51,7 +51,7 @@ public class JXWBlock implements Block {
      */
     JXWBlock(BlockManager blockManager, byte[] content){
         BlockManager = blockManager;
-        BlockId = new JXWBlockId(BlockManager.getBlockManagerNum(), BlockManager.getBlockNumCount());
+        BlockId = new JXWBlockId(BlockManager);
 
 
         //确保写入BlockData中的内容不超过Block的大小
@@ -73,9 +73,38 @@ public class JXWBlock implements Block {
         }
     }
 
+    /**
+     * 获得BlockData的数据长度
+     * @return BlockData的大小
+     */
+    public int getBlockDataSize(){//在大文件处理是可以提升性能
+        int result = 0;
+
+        try {
+            FileChannel fc = new RandomAccessFile(BlockId.getDataPath(), "r").getChannel();
+            //把缓冲区的内容加载到物理内存中
+            MappedByteBuffer mbb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size()).load();
+            result = (int)fc.size();
+            fc.close();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    /**
+     * 获得Block中存储的data的大小，如果经过检查data被损坏返回-1
+     * @return data没有被损坏返回data的大小，data被损坏了返回-1
+     */
     @Override
     public int getBlockContentSize() {
-        return BlockContentSize;
+        int result = -1;
+        if (getBlockDataSize() == BlockContentSize){
+            result = BlockContentSize;
+        }
+        return result;
     }
 
     /**
@@ -184,8 +213,6 @@ public class JXWBlock implements Block {
             e.printStackTrace();
         }
     }
-
-
 
     /**
      * 创建Block的data文件，把content写入data文件中

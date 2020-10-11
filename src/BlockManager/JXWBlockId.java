@@ -4,9 +4,9 @@ import Id.Id;
 
 public class JXWBlockId implements Id {
     /**
-     * Block的BlockManager的编号
+     * Block的BlockManager
      */
-    private int BlockManagerNum;
+    private BlockManager BlockManager;
     /**
      * Block的编号
      */
@@ -20,17 +20,21 @@ public class JXWBlockId implements Id {
      */
     private String BlockDataPath;
 
-    public JXWBlockId(int blockManagerNum, int blockNum) {
-        BlockManagerNum = blockManagerNum;
-        BlockNum = blockNum;
+    public JXWBlockId(BlockManager blockManager) {
+        BlockManager = blockManager;
+        BlockNum = blockManager.getBlockNumCount();
         String root = "./output/BlockManagers/";//Block文件输出的默认根目录
-        BlockMetaPath = root + "BM-" + blockManagerNum + "/" + "b-" + blockNum + ".meta";
-        BlockDataPath = root + "BM-" + blockManagerNum + "/" + "b-" + blockNum + ".data";
+        BlockMetaPath = root + "BM-" + getManagerNum() + "/" + "b-" + BlockNum + ".meta";
+        BlockDataPath = root + "BM-" + getManagerNum() + "/" + "b-" + BlockNum + ".data";
+    }
+
+    public BlockManager getManager() {
+        return BlockManager;
     }
 
     @Override
     public int getManagerNum() {
-        return BlockManagerNum;
+        return BlockManager.getBlockManagerNum();
     }
 
     @Override
@@ -44,7 +48,7 @@ public class JXWBlockId implements Id {
      */
     @Override
     public boolean equals(Id indexId) {
-        return indexId instanceof JXWBlockId && indexId.getManagerNum() == BlockManagerNum && indexId.getNum() == BlockNum;
+        return indexId instanceof JXWBlockId && indexId.getManagerNum() == getManagerNum() && indexId.getNum() == BlockNum;
     }
 
     @Override
@@ -52,7 +56,6 @@ public class JXWBlockId implements Id {
         return BlockMetaPath;
     }
 
-    @Override
     public String getDataPath() {
         return BlockDataPath;
     }
