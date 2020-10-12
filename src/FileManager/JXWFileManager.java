@@ -1,10 +1,12 @@
 package FileManager;
 
+import BlockManager.BlockManager;
 import ErrorManager.ErrorLog;
 import Id.Id;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class JXWFileManager implements FileManager {
     /**
@@ -18,12 +20,18 @@ public class JXWFileManager implements FileManager {
     private int FileManagerNum;
 
     /**
+     * FileManager关联的所有BlockManager
+     */
+    private List<BlockManager> BlockManagerList;
+
+    /**
      * 此FileManager保有的File
      */
     private List<File> FileList = new ArrayList<>();
 
-    JXWFileManager(){
+    JXWFileManager(List<BlockManager> blockManagerList){
         FileManagerNum = FileManagerNumCount++;
+        BlockManagerList = blockManagerList;
         String root = "./output/FileManagers/";
 
         //创建BlockManager的目录
@@ -54,6 +62,10 @@ public class JXWFileManager implements FileManager {
         }
 
         return null;
+    }
+
+    public BlockManager getRandomBlockManager(){
+        return BlockManagerList.get((new Random()).nextInt(BlockManagerList.size()));
     }
 
     /**

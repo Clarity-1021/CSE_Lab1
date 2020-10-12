@@ -53,7 +53,6 @@ public class JXWBlock implements Block {
         BlockManager = blockManager;
         BlockId = new JXWBlockId(BlockManager);
 
-
         //确保写入BlockData中的内容不超过Block的大小
         if (content.length <= BlockSize){//未超出
             BlockContentSize = content.length;
