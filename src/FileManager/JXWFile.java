@@ -1,17 +1,23 @@
 package FileManager;
 
 import BlockManager.Block;
+import BlockManager.JXWBlock;
 import BlockManager.JXWBlockId;
 import ErrorManager.ErrorLog;
 import Id.Id;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class JXWFile implements File {
+    private static String root = "./output/FileManagers/";//Block文件输出的默认根目录
+
+    /**
+     * File中Block的统一BlockSize
+     */
+    private static int FileBlockSize = 1024;
+
     /**
      * File的Id
      */
@@ -22,15 +28,7 @@ public class JXWFile implements File {
      */
     private FileManager FileManager;
 
-    /**
-     * File中Block的统一BlockSize
-     */
-    private int FileBlockSize = 1024;
-
-    /**
-     * File的数据所存储的Block，按顺序
-     */
-    private List<List<Block>> FileBlockLists = new ArrayList<>();
+    private String FileMetaPath;
 
     /**
      * File游标的当前位置
@@ -47,14 +45,18 @@ public class JXWFile implements File {
      */
     private long FileEnd = 0;
 
+    private List<List<Block>> FileBlockLists;
+
     /**
      * 创建FileId为fileId的File
      * @param fileId File的Id
      */
-    JXWFile(Id fileId){
+    JXWFile(FileManager fileManager, Id fileId){
+        FileManager = fileManager;
         FileId = fileId;
-        FileManager = ((JXWFileId)fileId).getFileManager();
+        FileMetaPath = root + "FM-" + fileManager.getFileManagerName() + "/" + FileId.getName() + ".meta";
 
+        FileBlockLists = readMateGetFileBlockLists();
         //创建空的meta文件
         upDateFileMeta();
     }
@@ -64,7 +66,7 @@ public class JXWFile implements File {
      * @return FileMeta的地址
      */
     public String getFileMetaPath(){
-        return FileId.getMetaPath();
+        return FileMetaPath;
     }
 
     @Override
@@ -83,7 +85,7 @@ public class JXWFile implements File {
      * @return BlockContent的长度
      */
     private int getBlockContentSize(List<Block> blockList){
-        return blockList.get(0).getBlockContentSize();
+        return blockList.get(0).blockSize();
     }
 
     /**
@@ -100,7 +102,7 @@ public class JXWFile implements File {
                 break;
             }
             else {//此副本被损坏,从副本List中移除，并更新FileMeta文件
-                ErrorLog.logErrorMessage("FM-" + FileId.getManagerNum() + " F-" + ((JXWFileId)FileId).getName() + " BM-" + (block.getIndexId().getManagerNum() + " B-" + ((JXWBlockId)block.getIndexId()).getNum() + " is damaged."));
+                ErrorLog.logErrorMessage(FileManager.getFileManagerName() + " " + FileId.getName() + " " + block.getBlockManager().getBlockManagerName() + " " + block.getIndexId().getName() + " is damaged.");
                 blockList.remove(block);
                 upDateFileMeta();//更新FileMeta
             }
@@ -318,7 +320,7 @@ public class JXWFile implements File {
             bw.write("logic size:\n");
             for (List<Block> blockList : FileBlockLists) {
                 for (Block block : blockList) {
-                    bw.write("{" + block.getIndexId().getManagerNum() + "," + ((JXWBlockId)block.getIndexId()).getNum() + "}");
+                    bw.write("{" + block.getBlockManager().getBlockManagerName() + "," + block.getIndexId().getName() + "}");
                 }
                 bw.write("\n");
             }
@@ -326,6 +328,37 @@ public class JXWFile implements File {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private List<List<Block>> readMateGetFileBlockLists(){
+        List<List<Block>> Lists = new ArrayList<>();
+
+        java.io.File file = new java.io.File(FileMetaPath);
+        if (!file.exists()){
+            return Lists;
+        }
+
+        try {
+            FileReader fr = new FileReader(FileMetaPath);
+            BufferedReader br = new BufferedReader(new FileReader(FileMetaPath));
+            for (int i = 0; i < 3; i++){
+                br.readLine();
+            }
+
+            String line = null;
+            while ((line = br.readLine()) != null){
+                String[] cols = line.split("{");
+
+                List<Block> blockList = new ArrayList<>();
+                blockList.add(new JXWBlock())
+            }
+            br.close();
+            fr.close();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        return result;
     }
 
     /**

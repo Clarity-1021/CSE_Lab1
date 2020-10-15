@@ -2,43 +2,26 @@ package BlockManager;
 
 import Id.Id;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class JXWBlockId implements Id {
-    /**
-     * Block的BlockManager
-     */
-    private BlockManager BlockManager;
     /**
      * Block的编号
      */
-    private int BlockNum;
-    /**
-     * Block的meta文件的路径
-     */
-    private String BlockMetaPath;
-    /**
-     * Block的data文件的路径
-     */
-    private String BlockDataPath;
+    private String BlockName;
 
-    public JXWBlockId(BlockManager blockManager) {
-        BlockManager = blockManager;
-        BlockNum = blockManager.getBlockNumCount();
-        String root = "./output/BlockManagers/";//Block文件输出的默认根目录
-        BlockMetaPath = root + "BM-" + getManagerNum() + "/" + "b-" + BlockNum + ".meta";
-        BlockDataPath = root + "BM-" + getManagerNum() + "/" + "b-" + BlockNum + ".data";
+    public JXWBlockId() {
+        BlockName = TimeStampNaming();
     }
 
-    public BlockManager getManager() {
-        return BlockManager;
+    public JXWBlockId(Id indexId) {
+        BlockName = indexId.getName();
     }
 
     @Override
-    public int getManagerNum() {
-        return BlockManager.getBlockManagerNum();
-    }
-
-    public int getNum() {
-        return BlockNum;
+    public String getName() {
+        return BlockName;
     }
 
     /**
@@ -47,15 +30,16 @@ public class JXWBlockId implements Id {
      */
     @Override
     public boolean equals(Id indexId) {
-        return indexId instanceof JXWBlockId && indexId.getManagerNum() == getManagerNum() && ((JXWBlockId) indexId).getNum() == BlockNum;
+        return indexId instanceof JXWBlockId && indexId.getName().equals(BlockName);
     }
 
-    @Override
-    public String getMetaPath() {
-        return BlockMetaPath;
-    }
-
-    public String getDataPath() {
-        return BlockDataPath;
+    /**
+     * 得到当前时间的时间戳精确到毫秒，生成block的名字
+     * @return BlockName
+     */
+    private static String TimeStampNaming(){
+        Long timeStamp = System.currentTimeMillis();
+        SimpleDateFormat sdf=new SimpleDateFormat("yyyyMMddHHmmssSSS");
+        return "B-" + sdf.format(new Date(Long.parseLong(String.valueOf(timeStamp))));
     }
 }

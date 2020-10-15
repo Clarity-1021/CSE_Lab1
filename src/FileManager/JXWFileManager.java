@@ -6,10 +6,12 @@ import Id.Id;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 public class JXWFileManager implements FileManager {
+
+    String root = "./output/FileManagers/";
+
     /**
      * 新建下一个FileManager的编号
      */
@@ -18,40 +20,29 @@ public class JXWFileManager implements FileManager {
     /**
      * FileManager的编号
      */
-    private int FileManagerNum;
+    private String FileManagerName;
 
     /**
      * FileManager关联的所有BlockManager
      */
     private List<BlockManager> BlockManagerList;
 
-    /**
-     * 此FileManager保有的File
-     */
-    private List<File> FileList = new ArrayList<>();
-
-    /**
-     * FileManager管理的所有File的名字和File的Id的映射
-     */
-    private Map<String, Id> FileNameIdMap;
-
     JXWFileManager(List<BlockManager> blockManagerList){
-        FileManagerNum = FileManagerNumCount++;
+        FileManagerName = "FM-" + FileManagerNumCount++;
         BlockManagerList = blockManagerList;
-        String root = "./output/FileManagers/";
 
         //创建BlockManager的目录
-        java.io.File file = new java.io.File(root + "FM-" + FileManagerNum);
+        java.io.File file = new java.io.File(root + FileManagerName);
         if (!file.exists()){//目录不存在
             if (!file.mkdir()){//创建目录不成功，记录在日志里面
-                ErrorLog.logErrorMessage("FileManager-" + FileManagerNum + "目录创建失败");
+                ErrorLog.logErrorMessage("FileManager-" + FileManagerName + "目录创建失败");
             }
         }
     }
 
     @Override
-    public int getFileManagerNum() {
-        return FileManagerNum;
+    public String getFileManagerName() {
+        return FileManagerName;
     }
 
     /**
@@ -81,9 +72,7 @@ public class JXWFileManager implements FileManager {
      */
     @Override
     public File newFile(Id fileId) {
-        File newFile = new JXWFile(fileId);
-        FileList.add(newFile);
-        FileNameIdMap.put(((JXWFileId)fileId).getName(), fileId);
+        File newFile = new JXWFile(this, fileId);
         return newFile;
     }
 }

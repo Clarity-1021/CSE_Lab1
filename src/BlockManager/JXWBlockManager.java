@@ -4,51 +4,59 @@ import ErrorManager.ErrorLog;
 import Id.Id;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class JXWBlockManager implements BlockManager {
+    private static String root = "./output/BlockManagers/";
+
     /**
      * 新建下一个BlockManager的编号
      */
     private static int BlockManagerNumCount = 1;
 
     /**
-     * BlockManager的编号
+     * BlockManager的名字
      */
-    private int BlockManagerNum;
+    private String BlockManagerName;
 
-    /**
-     * 新建下一个Block的编号
-     */
-    private int BlockNumCount = 1;
-
-    /**
-     * 此BlockManager保有的Block
-     */
-    private List<Block> BlockList = new ArrayList<>();
-
-    JXWBlockManager(){
-        BlockManagerNum = BlockManagerNumCount++;
-        String root = "./output/BlockManagers/";
+    public JXWBlockManager(){
+        BlockManagerName = "BM-" + BlockManagerNumCount++;
 
         //创建BlockManager的目录
-        File file = new File(root + "BM-" + BlockManagerNum);
+        File file = new File(root + BlockManagerName);
         if (!file.exists()){//目录不存在
             if (!file.mkdir()){//创建目录不成功，记录在日志里面
-                ErrorLog.logErrorMessage("BlockManager-" + BlockManagerNum + "目录创建失败");
+                ErrorLog.logErrorMessage("BlockManager-" + BlockManagerName + "目录创建失败");
+            }
+        }
+    }
+
+    public JXWBlockManager(int blockManagerNum){
+        BlockManagerName = "BM-" + blockManagerNum;
+
+        //创建BlockManager的目录
+        File file = new File(root + BlockManagerName);
+        if (!file.exists()){//目录不存在
+            if (!file.mkdir()){//创建目录不成功，记录在日志里面
+                ErrorLog.logErrorMessage("BlockManager-" + BlockManagerName + "目录创建失败");
+            }
+        }
+    }
+
+    public JXWBlockManager(String blockManagerName){
+        BlockManagerName = blockManagerName;
+
+        //创建BlockManager的目录
+        File file = new File(root + BlockManagerName);
+        if (!file.exists()){//目录不存在
+            if (!file.mkdir()){//创建目录不成功，记录在日志里面
+                ErrorLog.logErrorMessage("BlockManager-" + BlockManagerName + "目录创建失败");
             }
         }
     }
 
     @Override
-    public int getBlockManagerNum() {
-        return BlockManagerNum;
-    }
-
-    @Override
-    public int getBlockNumCount() {
-        return BlockNumCount++;
+    public String getBlockManagerName() {
+        return BlockManagerName;
     }
 
     /**
@@ -58,9 +66,7 @@ public class JXWBlockManager implements BlockManager {
      */
     @Override
     public Block newBlock(byte[] b) {
-        JXWBlock newBlock = new JXWBlock(this, b);
-        BlockList.add(newBlock);
-        return newBlock;
+        return new JXWBlock(this, b);
     }
 
     /**
@@ -70,13 +76,7 @@ public class JXWBlockManager implements BlockManager {
      */
     @Override
     public Block getBlock(Id indexId){
-        for (Block block : BlockList){
-            if (block.getIndexId().equals(indexId)){
-                return block;
-            }
-        }
-
-        return null;
+        return new JXWBlock(this, indexId);
     }
 
     /**
@@ -86,8 +86,6 @@ public class JXWBlockManager implements BlockManager {
      */
     @Override
     public Block newEmptyBlock(int blockSize) {
-        Block newEmptyBlock = new JXWBlock(this, blockSize);
-        BlockList.add(newEmptyBlock);
-        return newEmptyBlock;
+        return newBlock(new byte[blockSize]);
     }
 }

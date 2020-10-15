@@ -1,7 +1,6 @@
 package Id;
 
 public interface Id {
-    int getManagerNum();
+    String getName();
     boolean equals(Id indexId);
-    String getMetaPath();
 }

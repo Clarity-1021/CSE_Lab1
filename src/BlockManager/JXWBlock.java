@@ -10,22 +10,21 @@ import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 
 public class JXWBlock implements Block {
+    private static String root = "./output/BlockManagers/";//Block文件输出的默认根目录
+
     /**
      * Block的Id
      */
     private JXWBlockId BlockId;
+    private String BlockMetaPath;
+    private String BlockDataPath;
 
     /**
      * Block的BlockManager
      */
-    private BlockManager BlockManager;
+    private String BlockManagerName;
 
     //BlockMeta信息
-    /**
-     * Block的大小，默认为1024个byte
-     */
-    private int BlockSize = 1024;
-
     /**
      * Block的data中实际写入的字节数，默认为0
      */
@@ -37,42 +36,57 @@ public class JXWBlock implements Block {
     private String BlockCheckSum;
 
     /**
-     * 创建blockSize为blockSize的空Block
-     * @param blockSize Block的大小
-     */
-    JXWBlock(BlockManager blockManager, int blockSize){
-        BlockManager = blockManager;
-        BlockSize = blockSize;
-        BlockId = new JXWBlockId(BlockManager);
-
-        writeBlockMessage(new byte[0]);
-    }
-
-    /**
-     * 创建写有byte数组b的新Block，Block的大小为默认大小
+     * 创建写有byte数组b的新Block
+     * @param blockManagerName BlockManagerName
      * @param content 写入Block的byte数组
      */
-    JXWBlock(BlockManager blockManager, byte[] content){
-        BlockManager = blockManager;
-        BlockId = new JXWBlockId(BlockManager);
+    JXWBlock(String blockManagerName, byte[] content){
+        BlockManagerName = blockManagerName;
         BlockContentSize = content.length;
+        BlockId = new JXWBlockId();
+        BlockMetaPath = root + BlockManagerName + "/" + BlockId.getName() + ".meta";
+        BlockDataPath = root + BlockManagerName + "/" + BlockId.getName() + ".data";
 
-        byte[] contentToWrite = content;
-        if (BlockContentSize > BlockSize){//确保写入BlockData中的内容不超过Block的大小
-            BlockContentSize = BlockSize;
-            contentToWrite = new byte[BlockContentSize];
-            System.arraycopy(content, 0, contentToWrite, 0, BlockContentSize);
-        }
-        writeBlockMessage(contentToWrite);
+        writeBlockMessage(content);
     }
 
     /**
-     * 获得Block中存储的data的大小
+     * 通过BlockId获得Block
+     * @param blockManagerName BlockManagerName
+     * @param blockId BlockId
      */
-    @Override
-    public int getBlockContentSize() {
-        return BlockContentSize;
+    JXWBlock(String blockManagerName, Id blockId) {
+        BlockManagerName = blockManagerName;
+        BlockId = new JXWBlockId(blockId);
+        BlockMetaPath = root + BlockManagerName + "/" + BlockId.getName() + ".meta";
+        BlockDataPath = root + BlockManagerName + "/" + BlockId.getName() + ".data";
+
+        BlockContentSize = readMetaGetBlockContentSize();
     }
+
+    /**
+     * 通过读Block得到BlockContent的大小
+     * @return 文件存在返回BlockData的大小，不存在返回-1
+     */
+    private int readMetaGetBlockContentSize(){
+        File file = new File(BlockMetaPath);
+        if (!file.exists()){
+            return -1;
+        }
+
+        int result = 0;
+        try {
+            FileReader fr = new FileReader(BlockMetaPath);
+            BufferedReader br = new BufferedReader(new FileReader(BlockMetaPath));
+            result = Integer.parseInt(br.readLine().split(" ")[1]);
+            br.close();
+            fr.close();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        return result;
+}
 
     /**
      * 获得Block的Id
@@ -89,7 +103,7 @@ public class JXWBlock implements Block {
      */
     @Override
     public BlockManager getBlockManager() {
-        return BlockManager;
+        return new JXWBlockManager(BlockManagerName);
     }
 
     /**
@@ -97,7 +111,7 @@ public class JXWBlock implements Block {
      * @return BlockDate中存的byte数组
      */
     public byte[] read1() {
-        File file = new File(BlockId.getDataPath());
+        File file = new File(BlockDataPath);
         long fileSize = file.length();//BlockData的字节大小
 
         if (fileSize > Integer.MAX_VALUE){//应该不存在这个情况，如果出现了可以吧Block的大小改小一点
@@ -139,7 +153,7 @@ public class JXWBlock implements Block {
         byte[] result = new byte[0];
 
         try {
-            FileChannel fc = new RandomAccessFile(BlockId.getDataPath(), "r").getChannel();
+            FileChannel fc = new RandomAccessFile(BlockDataPath, "r").getChannel();
             //把缓冲区的内容加载到物理内存中
             MappedByteBuffer mbb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size()).load();
             result = new byte[(int)fc.size()];
@@ -161,7 +175,7 @@ public class JXWBlock implements Block {
      */
     @Override
     public int blockSize() {
-        return BlockSize;
+        return BlockContentSize;
     }
 
     /**
@@ -181,8 +195,8 @@ public class JXWBlock implements Block {
      */
     public void writeBlockMeta(){
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(BlockId.getMetaPath()));
-            bw.write("size: " + BlockSize + "\n");//写入BlockSize
+            BufferedWriter bw = new BufferedWriter(new FileWriter(BlockMetaPath));
+            bw.write("size: " + BlockContentSize + "\n");//写入BlockContentSize
             bw.write("checksum: " + BlockCheckSum);//写入checksum用于后期检验Block是否被损坏
             bw.close();
         } catch (IOException e) {
@@ -196,7 +210,7 @@ public class JXWBlock implements Block {
      */
     public void writeBlockData(byte[] content){
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(BlockId.getDataPath()));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(BlockDataPath));
             bw.write(new String(content, 0, BlockContentSize));
             bw.close();
         } catch (IOException e) {

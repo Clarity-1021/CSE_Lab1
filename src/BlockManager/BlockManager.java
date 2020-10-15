@@ -3,8 +3,7 @@ package BlockManager;
 import Id.Id;
 
 public interface BlockManager {
-    int getBlockManagerNum();
-    int getBlockNumCount();
+    String getBlockManagerName();
     Block getBlock(Id indexId);
     Block newBlock(byte[] b);
     default Block newEmptyBlock(int blockSize) {
