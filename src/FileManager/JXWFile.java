@@ -1,6 +1,7 @@
 package FileManager;
 
 import BlockManager.Block;
+import BlockManager.JXWBlockId;
 import ErrorManager.ErrorLog;
 import Id.Id;
 
@@ -24,7 +25,7 @@ public class JXWFile implements File {
     /**
      * File中Block的统一BlockSize
      */
-    private int FileBlockSize = 0;
+    private int FileBlockSize = 1024;
 
     /**
      * File的数据所存储的Block，按顺序
@@ -77,39 +78,84 @@ public class JXWFile implements File {
     }
 
     /**
+     * 通过Block的副本List获得这个BlockContent的长度
+     * @param blockList Block的副本List
+     * @return BlockContent的长度
+     */
+    private int getBlockContentSize(List<Block> blockList){
+        return blockList.get(0).getBlockContentSize();
+    }
+
+    /**
+     * 通过Block的副本List获得这个Block的Data
+     * @param blockList Block的副本List
+     * @return BlockData
+     */
+    private byte[] getBlockContent(List<Block> blockList){
+        byte[] result = new byte[0];
+
+        for (Block block : blockList) {//顺序查找Block的每一个副本
+            if (!block.isBlockDamaged()){//这个副本的Data没有损坏
+                result = block.read();
+                break;
+            }
+            else {//此副本被损坏,从副本List中移除，并更新FileMeta文件
+                ErrorLog.logErrorMessage("FM-" + FileId.getManagerNum() + " F-" + ((JXWFileId)FileId).getName() + " BM-" + (block.getIndexId().getManagerNum() + " B-" + ((JXWBlockId)block.getIndexId()).getNum() + " is damaged."));
+                blockList.remove(block);
+                upDateFileMeta();//更新FileMeta
+            }
+        }
+
+        return result;
+    }
+
+    public List<Integer> getFileCurrBlockPos(){
+        long blockCurr = 0;
+        long startPosInFileCurrBlock = FileCurr;
+        int blockIndex = 0;
+
+        for (List<Block> blockList : FileBlockLists){//顺序查找每一个Block的副本List，获得FileCurr所在的Block的Index和再这个Block中的offset
+            if (FileCurr >= blockCurr){
+                int currentBlockContentSize = getBlockContentSize(blockList);
+                if (startPosInFileCurrBlock < currentBlockContentSize){
+                    break;
+                }
+                blockCurr += currentBlockContentSize;
+                startPosInFileCurrBlock = FileCurr - blockCurr;
+                blockIndex++;
+            }
+        }
+
+        List<Integer> result = new ArrayList<>();
+        result.add(blockIndex);
+        result.add((int)startPosInFileCurrBlock);
+
+        return result;
+    }
+
+    /**
      * 从文件的开始位置开始读到结束位置，读最多length长度的文件内容
      * @param length 长度限制
      * @return 最多length长度的文件内容
      */
     @Override
     public byte[] read(int length) {
-        length = (int) Math.min(getFileSize(), length);//length是int,取小总是int
+        length = (int)Math.min(FileEnd - FileCurr, length);//length是int,取小总是int
         byte[] result = new byte[length];
 
-        int currentPos = 0;
-        int currentBlockPos = (int)(FileStart % FileBlockSize);
-        int nextLengthToRead = Math.min(length - currentPos, FileBlockSize) - currentBlockPos;
+        List<Integer> fileCurrBlockPos = getFileCurrBlockPos();
 
-        for (List<Block> blockList : FileBlockLists) {
-            if (nextLengthToRead == 0) {//不需要继续读
-                break;
-            }
+        int blockIndex = getFileCurrBlockPos().get(0);
+        int copyStartPos = fileCurrBlockPos.get(1);
+        int resultCurr = 0;
+        while (resultCurr < length){
+            List<Block> blockList = FileBlockLists.get(blockIndex++);
 
-            //还需要继续读nextLengthToRead个字节，查找下一个块
-            for (Object block : blockList) {//顺序查找副本
-                if (((Block) block).getBlockContentSize() != -1){//这个副本的Data没有损坏
-                    System.arraycopy(((Block) block).read(), currentBlockPos, result, currentPos, nextLengthToRead);
-                    currentBlockPos = (currentBlockPos + nextLengthToRead) % FileBlockSize;
-                    currentPos += nextLengthToRead;
-                    nextLengthToRead = Math.min(length - currentPos, FileBlockSize) - currentBlockPos;
-                    break;
-                }
-                else {//此副本被损坏,从副本List中移除，并更新FileMeta文件
-                    ErrorLog.logErrorMessage("FM-" + FileId.getManagerNum() + " F-" + FileId.getNum() + " BM-" + ((Block) block).getIndexId().getManagerNum() + " B-" + ((Block) block).getIndexId().getNum() + " is damaged.");
-                    blockList.remove(block);
-                    upDateFileMeta();//更新FileMeta
-                }
-            }
+            byte[] blockContent = getBlockContent(blockList);
+            int copyLength = Math.min(blockContent.length - copyStartPos, length - resultCurr);
+            System.arraycopy(blockContent, copyStartPos, result, resultCurr, copyLength);
+            resultCurr += copyLength;
+            if (copyStartPos != 0) copyStartPos = 0;
         }
 
         return result;
@@ -121,86 +167,144 @@ public class JXWFile implements File {
      */
     @Override
     public void write(byte[] b) {
-        List<List<Block>> newBlockLists = new ArrayList<>();
+        int bLength = b.length;
 
-        int length = b.length;
+        List<Integer> fileCurrBlockPos = getFileCurrBlockPos();
 
+        int fileCurrBlockIndex = getFileCurrBlockPos().get(0);
+        int fileCurrBlockCurrPos = fileCurrBlockPos.get(1);
 
-
-
-        int currentPos = 0;
-        int blockCopySize = (int)(FileCurr / FileBlockSize);//当前游标所在块儿之前的需要复制的完整的Block的个数
-        for (int i = 0; i < blockCopySize; i++){
-            List<Block> blockList = FileBlockLists.get(i);
-            newBlockLists.add(blockList);
-
-            byte[] contentToWrite = new byte[FileBlockSize];
-            //需要创建新副本
-            for (Object block : blockList) {//顺序查找副本
-                if (((Block) block).getBlockContentSize() != -1){//这个副本的Data没有损坏
-                    System.arraycopy(((Block)block).read(), 0, contentToWrite, 0, FileBlockSize);
-                    currentPos += FileBlockSize;
-                    break;
-                }
-                else {//此副本被损坏,从副本List中移除
-                    ErrorLog.logErrorMessage("FM-" + FileId.getManagerNum() + " F-" + FileId.getNum() + " BM-" + ((Block) block).getIndexId().getManagerNum() + " B-" + ((Block) block).getIndexId().getNum() + " is damaged.");
-                    blockList.remove(block);
-                }
-            }
-
-            blockList.add(newBlock(contentToWrite));
-        }
-
-        int currentBlockIndex = blockCopySize;
-        int currentBlockPos = 0;
-        int nextLengthToWrite = Math.min((int)(FileCurr % FileBlockSize + length), FileBlockSize);
         int bPos = 0;
-        int remainLengthBeforeFileCurr = (int)(FileCurr % FileBlockSize);
-        int nextLengthToCopyInB = remainLengthBeforeFileCurr + length > FileBlockSize ? FileBlockSize - remainLengthBeforeFileCurr : length;
+        List<List<Block>> BlockListsToInsert = new ArrayList<>();
+        if (fileCurrBlockCurrPos == 0){//写入的位置在Block的头上，直接创建新的Block插入原FileBlock的List中
+            while (bPos < bLength){
+                int writeLength = Math.min(FileBlockSize, bLength - bPos);
+                byte[] contentToWrite = new byte[writeLength];
+                System.arraycopy(b, bPos, contentToWrite, 0, writeLength);
+                bPos += writeLength;
 
-        List<Block> oldBlockList = FileBlockLists.get(blockCopySize);
-        List<Block> blockList = new ArrayList<>();
-        newBlockLists.add(blockList);
-
-        byte[] contentToWrite = new byte[nextLengthToCopyInB];
-        for (Object block : oldBlockList) {//顺序查找副本
-            if (((Block) block).getBlockContentSize() != -1){//这个副本的Data没有损坏
-                System.arraycopy(((Block)block).read(), 0, contentToWrite, 0, remainLengthBeforeFileCurr);
-                currentPos += remainLengthBeforeFileCurr;
-                break;
+                List<Block> BlockListToInsert = new ArrayList<>();
+                BlockListToInsert.add(newBlock(contentToWrite));
+                BlockListsToInsert.add(BlockListToInsert);
             }
-            else {//此副本被损坏,从副本List中移除
-                ErrorLog.logErrorMessage("FM-" + FileId.getManagerNum() + " F-" + FileId.getNum() + " BM-" + ((Block) block).getIndexId().getManagerNum() + " B-" + ((Block) block).getIndexId().getNum() + " is damaged.");
-                blockList.remove(block);
+        }
+        else {//从FileCurr所在的Block开始向后写
+            List<Block> fileCurrBlock = FileBlockLists.get(fileCurrBlockIndex);
+            int fileCurrBlockContentSize = getBlockContentSize(fileCurrBlock);
+            int fileCurrBlockRemainLength = fileCurrBlockContentSize - fileCurrBlockCurrPos;
+
+            byte[] fileCurrBlockContent = getBlockContent(fileCurrBlock);
+            int insertLength = fileCurrBlockContentSize + bLength;
+            if (insertLength <= FileBlockSize){//如果FileCurr所在Block中的Data和要写入的数据的大小小于当前块的大小，只用用一个新块儿替换
+                byte[] contentToWrite = new byte[insertLength];
+                System.arraycopy(fileCurrBlockContent, 0, contentToWrite, 0, fileCurrBlockCurrPos);
+                System.arraycopy(b, bPos, contentToWrite, fileCurrBlockCurrPos, bLength);
+                System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, fileCurrBlockCurrPos + bLength, fileCurrBlockRemainLength);
+
+                List<Block> BlockListToInsert = new ArrayList<>();
+                BlockListToInsert.add(newBlock(contentToWrite));
+                BlockListsToInsert.add(BlockListToInsert);
+            }
+            else {
+                byte[] contentToWrite = new byte[FileBlockSize];
+                List<Block> BlockListToInsert = new ArrayList<>();
+
+                if (fileCurrBlockCurrPos + bLength <= FileBlockSize){//FileCurr所在Block被切分的后半部分被分割
+                    System.arraycopy(fileCurrBlockContent, 0, contentToWrite, 0, fileCurrBlockCurrPos);
+                    System.arraycopy(b, bPos, contentToWrite, fileCurrBlockCurrPos, bLength);
+                    if (fileCurrBlockCurrPos + bLength < FileBlockSize){
+                        System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, fileCurrBlockCurrPos + bLength, fileCurrBlockRemainLength);
+                        fileCurrBlockCurrPos += FileBlockSize - (bLength + fileCurrBlockCurrPos);
+                        fileCurrBlockRemainLength = fileCurrBlockContentSize - fileCurrBlockCurrPos;
+                    }
+                    BlockListToInsert.add(newBlock(contentToWrite));
+                    BlockListsToInsert.add(BlockListToInsert);
+
+                    contentToWrite = new byte[fileCurrBlockRemainLength];
+                    System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, 0, fileCurrBlockRemainLength);
+
+                    BlockListToInsert = new ArrayList<>();
+                    BlockListToInsert.add(newBlock(contentToWrite));
+                    BlockListsToInsert.add(BlockListToInsert);
+                }
+                else {//需要写入的部分被分割
+                    System.arraycopy(fileCurrBlockContent, 0, contentToWrite, 0, fileCurrBlockCurrPos);
+                    System.arraycopy(b, bPos, contentToWrite, fileCurrBlockCurrPos, FileBlockSize - fileCurrBlockCurrPos);
+                    bPos += FileBlockSize - fileCurrBlockCurrPos;
+
+                    BlockListToInsert.add(newBlock(contentToWrite));
+                    BlockListsToInsert.add(BlockListToInsert);
+
+                    int completeNewBlockOfB = (bLength - bPos) / FileBlockSize;
+                    int remainLengthOfB = (bLength - bPos) % FileBlockSize;
+                    for (int i = 0; i < completeNewBlockOfB; i++){
+                        contentToWrite = new byte[FileBlockSize];
+                        System.arraycopy(b, bPos, contentToWrite, 0, FileBlockSize);
+                        bPos += FileBlockSize;
+
+                        BlockListToInsert.add(newBlock(contentToWrite));
+                        BlockListsToInsert.add(BlockListToInsert);
+                    }
+
+                    if (remainLengthOfB == 0){//没有需要写入的部分了，把FurrCurr的后半部分插入即可
+                        contentToWrite = new byte[fileCurrBlockRemainLength];
+                        System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, 0, fileCurrBlockRemainLength);
+
+                        BlockListToInsert.add(newBlock(contentToWrite));
+                        BlockListsToInsert.add(BlockListToInsert);
+                    }
+                    else {
+                        int remainLengthToWrite = remainLengthOfB + fileCurrBlockRemainLength;
+                        if (remainLengthToWrite <= FileBlockSize){
+                            contentToWrite = new byte[remainLengthToWrite];
+                            System.arraycopy(b, bPos, contentToWrite, 0, remainLengthOfB);
+                            System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, remainLengthOfB, fileCurrBlockRemainLength);
+
+                            BlockListToInsert.add(newBlock(contentToWrite));
+                            BlockListsToInsert.add(BlockListToInsert);
+                        }
+                        else {
+                            contentToWrite = new byte[FileBlockSize];
+                            System.arraycopy(b, bPos, contentToWrite, 0, remainLengthOfB);
+                            System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, remainLengthOfB, fileCurrBlockRemainLength);
+                            fileCurrBlockCurrPos += (FileBlockSize - remainLengthOfB);
+                            fileCurrBlockRemainLength = fileCurrBlockContentSize - fileCurrBlockCurrPos;
+
+                            BlockListToInsert.add(newBlock(contentToWrite));
+                            BlockListsToInsert.add(BlockListToInsert);
+
+                            contentToWrite = new byte[fileCurrBlockRemainLength];
+                            System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, 0, fileCurrBlockRemainLength);
+
+                            BlockListToInsert.add(newBlock(contentToWrite));
+                            BlockListsToInsert.add(BlockListToInsert);
+                        }
+                    }
+                }
             }
         }
 
-        System.arraycopy(b, bPos, contentToWrite, remainLengthBeforeFileCurr, nextLengthToCopyInB);
-        bPos += nextLengthToCopyInB;
-        blockList.add(newBlock(contentToWrite));
-        int newBlockSize = (length - nextLengthToCopyInB) / FileBlockSize;//b中可新建完整Block的个数
+        FileBlockLists.addAll(fileCurrBlockIndex + 1, BlockListsToInsert);
+        FileBlockLists.remove(fileCurrBlockIndex);
 
-        for (int i = 0; i < newBlockSize; i++){
-            List<Block> newBlockList = new ArrayList<>();
-            newBlockLists.add(newBlockList);
-
-            byte[] newContentToWrite = new byte[FileBlockSize];
-            System.arraycopy(b, bPos, newContentToWrite, 0, FileBlockSize);
-            bPos += FileBlockSize;
-            newBlockList.add(newBlock(newContentToWrite));
-        }
-
-        int remainLengthBeforeBLength = length - bPos;
-        blockList = new ArrayList<>();
-
+        upDateFileMeta();
     }
 
     public Block newBlock(byte[] content){
         return ((JXWFileManager)FileManager).getRandomBlockManager().newBlock(content);
     }
 
+    /**
+     * 获得文件的大小，同时更新FileEnd游标
+     * @return File的大小
+     */
     public long getFileSize(){
-        return FileEnd - FileStart;
+        FileEnd = 0;
+        for (List<Block> blockList : FileBlockLists){
+            FileEnd += getBlockContentSize(blockList);
+        }
+
+        return FileEnd;
     }
 
     /**
@@ -213,8 +317,8 @@ public class JXWFile implements File {
             bw.write("block size: " + FileBlockSize + "\n");
             bw.write("logic size:\n");
             for (List<Block> blockList : FileBlockLists) {
-                for (Object block : blockList) {
-                    bw.write("{" + ((Block)block).getIndexId().getManagerNum() + "," + ((Block)block).getIndexId().getNum() + "}");
+                for (Block block : blockList) {
+                    bw.write("{" + block.getIndexId().getManagerNum() + "," + ((JXWBlockId)block.getIndexId()).getNum() + "}");
                 }
                 bw.write("\n");
             }
@@ -250,7 +354,9 @@ public class JXWFile implements File {
                 FileEnd = result;
                 break;
         }
-        return result;
+
+        FileCurr = result;
+        return FileCurr;
     }
 
     /**
@@ -274,23 +380,9 @@ public class JXWFile implements File {
 
     }
 
-    /**
-     * 获得File的大小
-     * @return File中存数据的Block中data的长度之和
-     */
     @Override
     public long size() {
-        long size = 0;
-        for (List blockList : FileBlockLists){
-            for (Object block : blockList){
-                int blockDataSize = ((Block)block).getBlockContentSize();
-                if (blockDataSize != -1){//这个副本没有被损坏
-                    size += blockDataSize;
-                    break;
-                }
-            }
-        }
-        return size;
+        return -1;
     }
 
     @Override

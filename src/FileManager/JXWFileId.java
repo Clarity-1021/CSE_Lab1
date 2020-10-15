@@ -8,19 +8,19 @@ public class JXWFileId implements Id {
      */
     private FileManager FileManager;
     /**
-     * File的编号
+     * File的Name
      */
-    private int FileNum;
+    private String FileName;
     /**
      * File的meta文件的路径
      */
     private String FileMetaPath;
 
-    public JXWFileId(FileManager fileManager) {
+    public JXWFileId(FileManager fileManager, String fileName) {
         FileManager = fileManager;
-        FileNum = fileManager.getFileManagerNum();
+        FileName = fileName;
         String root = "./output/FileManagers/";//Block文件输出的默认根目录
-        FileMetaPath = root + "FM-" + getManagerNum() + "/" + "f-" + FileNum + ".meta";
+        FileMetaPath = root + "FM-" + getManagerNum() + "/" + "f-" + FileName + ".meta";
     }
 
     public FileManager getFileManager() {
@@ -32,9 +32,8 @@ public class JXWFileId implements Id {
         return FileManager.getFileManagerNum();
     }
 
-    @Override
-    public int getNum() {
-        return FileNum;
+    public String getName() {
+        return FileName;
     }
 
     /**
@@ -43,7 +42,7 @@ public class JXWFileId implements Id {
      */
     @Override
     public boolean equals(Id indexId) {
-        return indexId instanceof JXWFileId && indexId.getManagerNum() == getManagerNum() && indexId.getNum() == FileNum;
+        return indexId instanceof JXWFileId && indexId.getManagerNum() == getManagerNum() && ((JXWFileId) indexId).getName().equals(FileName);
     }
 
     @Override

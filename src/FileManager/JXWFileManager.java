@@ -6,6 +6,7 @@ import Id.Id;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class JXWFileManager implements FileManager {
@@ -28,6 +29,11 @@ public class JXWFileManager implements FileManager {
      * 此FileManager保有的File
      */
     private List<File> FileList = new ArrayList<>();
+
+    /**
+     * FileManager管理的所有File的名字和File的Id的映射
+     */
+    private Map<String, Id> FileNameIdMap;
 
     JXWFileManager(List<BlockManager> blockManagerList){
         FileManagerNum = FileManagerNumCount++;
@@ -77,6 +83,7 @@ public class JXWFileManager implements FileManager {
     public File newFile(Id fileId) {
         File newFile = new JXWFile(fileId);
         FileList.add(newFile);
+        FileNameIdMap.put(((JXWFileId)fileId).getName(), fileId);
         return newFile;
     }
 }

@@ -9,4 +9,5 @@ public interface Block {
     BlockManager getBlockManager();
     byte[] read();
     int blockSize();
+    boolean isBlockDamaged();
 }

@@ -37,7 +37,6 @@ public class JXWBlockId implements Id {
         return BlockManager.getBlockManagerNum();
     }
 
-    @Override
     public int getNum() {
         return BlockNum;
     }
@@ -48,7 +47,7 @@ public class JXWBlockId implements Id {
      */
     @Override
     public boolean equals(Id indexId) {
-        return indexId instanceof JXWBlockId && indexId.getManagerNum() == getManagerNum() && indexId.getNum() == BlockNum;
+        return indexId instanceof JXWBlockId && indexId.getManagerNum() == getManagerNum() && ((JXWBlockId) indexId).getNum() == BlockNum;
     }
 
     @Override
