@@ -15,6 +15,10 @@ public class JXWBlockId implements Id {
         BlockName = TimeStampNaming();
     }
 
+    public JXWBlockId(String blockName){
+        BlockName = blockName;
+    }
+
     public JXWBlockId(Id indexId) {
         BlockName = indexId.getName();
     }

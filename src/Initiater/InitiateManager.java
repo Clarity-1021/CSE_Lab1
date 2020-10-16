@@ -1,7 +1,7 @@
 package Initiater;
 
-import BlockManager.BlockManager;
-import BlockManager.JXWBlockManager;
+import BlockManager.*;
+import FileManager.*;
 import ErrorManager.ErrorLog;
 
 import java.io.File;
@@ -35,6 +35,38 @@ public class InitiateManager {
         for (int i = 0; i < bmCount; i++) {
             bm = new JXWBlockManager();
         }
+    }
+
+    //清空原来的FM，创建指定数目个FileManagers
+    public static void initiateFM(int fmCount, int bmCount){
+        File fmDir = new File("./output/FileManagers/");
+        String[] children = fmDir.list();
+        if (children != null){
+            for (String fm : children) {
+                File fmPath = new File(fmDir, fm);
+                String[] files = fmPath.list();
+
+                if (files == null) break;
+                for (String file : files){
+                    boolean success = deleteDir(new File(fmDir + fm, file));
+                    if (!success){
+                        ErrorLog.logErrorMessage(fm + " " + file + " is not deleted successfully.");
+                    }
+                }
+
+                boolean success = deleteDir(fmPath);
+                if (!success){
+                    ErrorLog.logErrorMessage(fm + " is not deleted successfully.");
+                }
+            }
+        }
+
+        FileManager fm;
+        for (int i = 0; i < fmCount; i++) {
+            fm = new JXWFileManager(bmCount);
+        }
+
+        initiateBM(bmCount);
     }
 
     /**

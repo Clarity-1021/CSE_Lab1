@@ -55,7 +55,7 @@ public class JXWBlock implements Block {
      * @param blockManagerName BlockManagerName
      * @param blockId BlockId
      */
-    JXWBlock(String blockManagerName, Id blockId) {
+    public JXWBlock(String blockManagerName, Id blockId) {
         BlockManagerName = blockManagerName;
         BlockId = new JXWBlockId(blockId);
         BlockMetaPath = root + BlockManagerName + "/" + BlockId.getName() + ".meta";
@@ -104,44 +104,6 @@ public class JXWBlock implements Block {
     @Override
     public BlockManager getBlockManager() {
         return new JXWBlockManager(BlockManagerName);
-    }
-
-    /**
-     * 获得BlockData的数据//原始方法
-     * @return BlockDate中存的byte数组
-     */
-    public byte[] read1() {
-        File file = new File(BlockDataPath);
-        long fileSize = file.length();//BlockData的字节大小
-
-        if (fileSize > Integer.MAX_VALUE){//应该不存在这个情况，如果出现了可以吧Block的大小改小一点
-            ErrorLog.logErrorMessage("BlockData文件大小超出最大整数的大小");
-            return null;
-        }
-
-        byte[] buffer = null;
-        try {
-            FileInputStream fi = new FileInputStream(file);
-            buffer = new byte[(int)fileSize];
-            int offset = 0;
-            int numRead = 0;
-
-            //确保所有字节都被读到了
-            //每次最多读入length-offset个字节，实际读到的字节数为numRead
-            while (offset < buffer.length && (numRead = fi.read(buffer, offset, buffer.length - offset)) >= 0){
-                offset += numRead;
-            }
-            if (offset != buffer.length){
-                throw new IOException("BlockData hasn't been completely read");
-            }
-
-            fi.close();
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-
-        return buffer;
     }
 
     /**

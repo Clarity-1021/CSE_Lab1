@@ -66,7 +66,7 @@ public class JXWBlockManager implements BlockManager {
      */
     @Override
     public Block newBlock(byte[] b) {
-        return new JXWBlock(this, b);
+        return new JXWBlock(BlockManagerName, b);
     }
 
     /**
@@ -76,7 +76,7 @@ public class JXWBlockManager implements BlockManager {
      */
     @Override
     public Block getBlock(Id indexId){
-        return new JXWBlock(this, indexId);
+        return new JXWBlock(BlockManagerName, indexId);
     }
 
     /**

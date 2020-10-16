@@ -11,12 +11,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JXWFile implements File {
-    private static String root = "./output/FileManagers/";//Block文件输出的默认根目录
+    private static final String root = "./output/FileManagers/";//Block文件输出的默认根目录
 
     /**
      * File中Block的统一BlockSize
      */
-    private static int FileBlockSize = 1024;
+    private static final int FileBlockSize = 1024;
 
     /**
      * File的Id
@@ -47,17 +47,44 @@ public class JXWFile implements File {
 
     private List<List<Block>> FileBlockLists;
 
+    private byte[] FileBuffer = null;
+
+    private boolean isDirty = false;
+
     /**
      * 创建FileId为fileId的File
-     * @param fileId File的Id
+     * @param fileManager 这个File的FileManager
+     * @param fileId FileId
      */
-    JXWFile(FileManager fileManager, Id fileId){
+    public JXWFile(FileManager fileManager, Id fileId){
         FileManager = fileManager;
         FileId = fileId;
-        FileMetaPath = root + "FM-" + fileManager.getFileManagerName() + "/" + FileId.getName() + ".meta";
+        FileMetaPath = root + fileManager.getFileManagerName() + "/" + FileId.getName() + ".meta";
 
+        //如果File已经存在，通过FileMeta获得FileBlockLists
+        if ((new java.io.File(FileMetaPath)).exists()) {
+            FileBlockLists = readMateGetFileBlockLists();
+        }
+        else {//如果File不存在，写入FileMeta
+            FileBlockLists = new ArrayList<>();
+            upDateFileMeta();
+        }
+    }
+
+    /**
+     * 创建FileId为fileIdTo的File，FileMeta和fileIdFrom的一致
+     * @param fileManager 这个File的FileManager
+     * @param fileIdFrom 被Copy的File的Id
+     * @param fileIdTo 副本File的Id
+     */
+    public JXWFile(FileManager fileManager, Id fileIdFrom, Id fileIdTo){
+        FileManager = fileManager;
+        FileId = fileIdTo;
+        FileMetaPath = root + fileManager.getFileManagerName() + "/" + fileIdFrom.getName() + ".meta";
+        //如果FileFrom已经存在，通过FileFrom的FileMeta获得FileBlockLists
         FileBlockLists = readMateGetFileBlockLists();
-        //创建空的meta文件
+        FileMetaPath = root + fileManager.getFileManagerName() + "/" + FileId.getName() + ".meta";
+
         upDateFileMeta();
     }
 
@@ -111,6 +138,10 @@ public class JXWFile implements File {
         return result;
     }
 
+    /**
+     * 获得FileCurr游标当前位置所在的Block的Index和在当前Block中的offset
+     * @return List.get(0)是BlockIndex，List.get(1)是offset
+     */
     public List<Integer> getFileCurrBlockPos(){
         long blockCurr = 0;
         long startPosInFileCurrBlock = FileCurr;
@@ -133,6 +164,21 @@ public class JXWFile implements File {
         result.add((int)startPosInFileCurrBlock);
 
         return result;
+    }
+
+    private void loadFile(){
+        if (FileBuffer == null){
+            FileBuffer = new byte[(int)FileEnd];//Todo 先不考虑溢出
+            int bufferPos = 0;
+            for (List<Block> blockList : FileBlockLists){
+                byte[] content = getBlockContent(blockList);
+                int copyLength = content.length;
+                System.arraycopy(content, 0, FileBuffer, bufferPos, copyLength);
+                bufferPos += copyLength;
+            }
+        }
+
+        System.out.println(FileBuffer);
     }
 
     /**
@@ -163,6 +209,17 @@ public class JXWFile implements File {
         return result;
     }
 
+    @Override
+    public byte[] bufferedRead(int length) {
+        loadFile();//检查是否初次读写，初次读写对File进行缓存
+
+        length = (int)Math.min(FileEnd - FileCurr, length);//length是int,取小总是int
+        byte[] result = new byte[length];
+        System.arraycopy(FileBuffer, (int)FileCurr, result, 0, length);
+
+        return result;
+    }
+
     /**
      * 在文件游标的当前位置插入byte数组b
      * @param b 需要被写入文件的数据
@@ -173,7 +230,7 @@ public class JXWFile implements File {
 
         List<Integer> fileCurrBlockPos = getFileCurrBlockPos();
 
-        int fileCurrBlockIndex = getFileCurrBlockPos().get(0);
+        int fileCurrBlockIndex = fileCurrBlockPos.get(0);
         int fileCurrBlockCurrPos = fileCurrBlockPos.get(1);
 
         int bPos = 0;
@@ -283,13 +340,30 @@ public class JXWFile implements File {
                         }
                     }
                 }
+
+                //备份FileCurr之后的Block
+                for (int i = fileCurrBlockIndex; i < FileBlockLists.size(); i++){//顺序查找每一个Block的副本List，获得FileCurr所在的Block的Index和再这个Block中的offset
+                    List<Block> blockList = FileBlockLists.get(i);
+                    blockList.add(newBlock(getBlockContent(blockList)));
+                }
             }
         }
 
-        FileBlockLists.addAll(fileCurrBlockIndex + 1, BlockListsToInsert);
-        FileBlockLists.remove(fileCurrBlockIndex);
+        if (fileCurrBlockIndex < FileBlockLists.size()){
+            FileBlockLists.addAll(fileCurrBlockIndex + 1, BlockListsToInsert);
+            FileBlockLists.remove(fileCurrBlockIndex);
+        }
+        else {
+            FileBlockLists.addAll(BlockListsToInsert);
+        }
 
+        //更新FileMeta
         upDateFileMeta();
+    }
+
+    @Override
+    public void bufferedWrite(byte[] b) {
+
     }
 
     public Block newBlock(byte[] content){
@@ -320,7 +394,7 @@ public class JXWFile implements File {
             bw.write("logic size:\n");
             for (List<Block> blockList : FileBlockLists) {
                 for (Block block : blockList) {
-                    bw.write("{" + block.getBlockManager().getBlockManagerName() + "," + block.getIndexId().getName() + "}");
+                    bw.write(block.getBlockManager().getBlockManagerName() + "," + block.getIndexId().getName() + " ");
                 }
                 bw.write("\n");
             }
@@ -332,25 +406,22 @@ public class JXWFile implements File {
 
     private List<List<Block>> readMateGetFileBlockLists(){
         List<List<Block>> Lists = new ArrayList<>();
-
-        java.io.File file = new java.io.File(FileMetaPath);
-        if (!file.exists()){
-            return Lists;
-        }
-
         try {
             FileReader fr = new FileReader(FileMetaPath);
-            BufferedReader br = new BufferedReader(new FileReader(FileMetaPath));
+            BufferedReader br = new BufferedReader(fr);
             for (int i = 0; i < 3; i++){
                 br.readLine();
             }
 
             String line = null;
             while ((line = br.readLine()) != null){
-                String[] cols = line.split("{");
-
+                String[] cols = line.split(" ");
                 List<Block> blockList = new ArrayList<>();
-                blockList.add(new JXWBlock())
+                for (String bmBlock : cols){
+                    String[] args = bmBlock.split(",");
+                    blockList.add(new JXWBlock(args[0], new JXWBlockId(args[1])));
+                }
+                Lists.add(blockList);
             }
             br.close();
             fr.close();
@@ -358,7 +429,8 @@ public class JXWFile implements File {
         catch (IOException e){
             e.printStackTrace();
         }
-        return result;
+
+        return Lists;
     }
 
     /**
@@ -405,12 +477,11 @@ public class JXWFile implements File {
         return pos;
     }
 
-
-//Buffer需实现以下
-
     @Override
     public void close() {
+        if (isDirty){
 
+        }
     }
 
     @Override

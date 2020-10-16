@@ -1,11 +1,10 @@
 package FileManager;
 
 import BlockManager.BlockManager;
+import BlockManager.JXWBlockManager;
 import ErrorManager.ErrorLog;
 import Id.Id;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class JXWFileManager implements FileManager {
@@ -23,13 +22,26 @@ public class JXWFileManager implements FileManager {
     private String FileManagerName;
 
     /**
-     * FileManager关联的所有BlockManager
+     * FileManager关联的BlockManager的个数
      */
-    private List<BlockManager> BlockManagerList;
+    private int BlockManagerCount;
 
-    JXWFileManager(List<BlockManager> blockManagerList){
+    public JXWFileManager(int blockManagerCount){
         FileManagerName = "FM-" + FileManagerNumCount++;
-        BlockManagerList = blockManagerList;
+        BlockManagerCount = blockManagerCount;
+
+        //创建BlockManager的目录
+        java.io.File file = new java.io.File(root + FileManagerName);
+        if (!file.exists()){//目录不存在
+            if (!file.mkdir()){//创建目录不成功，记录在日志里面
+                ErrorLog.logErrorMessage("FileManager-" + FileManagerName + "目录创建失败");
+            }
+        }
+    }
+
+    public JXWFileManager(int fileManagerNum, int blockManagerCount){
+        FileManagerName = "FM-" + fileManagerNum;
+        BlockManagerCount = blockManagerCount;
 
         //创建BlockManager的目录
         java.io.File file = new java.io.File(root + FileManagerName);
@@ -52,17 +64,11 @@ public class JXWFileManager implements FileManager {
      */
     @Override
     public File getFile(Id fileId) {
-        for (File file : FileList){
-            if (file.getFileId().equals(fileId)){
-                return file;
-            }
-        }
-
-        return null;
+        return new JXWFile(this, fileId);
     }
 
     public BlockManager getRandomBlockManager(){
-        return BlockManagerList.get((new Random()).nextInt(BlockManagerList.size()));
+        return new JXWBlockManager((new Random()).nextInt(BlockManagerCount) + 1);
     }
 
     /**
@@ -72,7 +78,6 @@ public class JXWFileManager implements FileManager {
      */
     @Override
     public File newFile(Id fileId) {
-        File newFile = new JXWFile(this, fileId);
-        return newFile;
+        return new JXWFile(this, fileId);
     }
 }
