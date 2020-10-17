@@ -61,32 +61,31 @@ public class JXWBlock implements Block {
         BlockMetaPath = root + BlockManagerName + "/" + BlockId.getName() + ".meta";
         BlockDataPath = root + BlockManagerName + "/" + BlockId.getName() + ".data";
 
-        BlockContentSize = readMetaGetBlockContentSize();
+        //读Meta获得BlockContentSize和BlockCheckSum
+        readMetaGetInfo();
     }
 
     /**
-     * 通过读Block得到BlockContent的大小
-     * @return 文件存在返回BlockData的大小，不存在返回-1
+     * 读BlockMeta获得BlockContentSize和BlockCheckSum
      */
-    private int readMetaGetBlockContentSize(){
+    private void readMetaGetInfo() {
         File file = new File(BlockMetaPath);
         if (!file.exists()){
-            return -1;
+            return;
         }
 
-        int result = 0;
         try {
             FileReader fr = new FileReader(BlockMetaPath);
             BufferedReader br = new BufferedReader(new FileReader(BlockMetaPath));
-            result = Integer.parseInt(br.readLine().split(" ")[1]);
+            BlockContentSize = Integer.parseInt(br.readLine().split(" ")[1]);
+            BlockCheckSum = br.readLine().split(" ")[1];
             br.close();
             fr.close();
         }
         catch (IOException e){
             e.printStackTrace();
         }
-        return result;
-}
+    }
 
     /**
      * 获得Block的Id

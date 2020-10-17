@@ -5,8 +5,8 @@ import SmartTools.SmartTools;
 
 //HEX打印Block
 public class Hex {
-    public static final int blockManagerNum = 5;//BlockManager
-    public static final int timeStamp = 2020;//Block时间戳
+    public static final int blockManagerNum = 4;//BlockManager
+    public static final String timeStamp = "20201017204351429";//Block时间戳
 
     public static void main(String[] args) {
         BlockManager bm1 = new JXWBlockManager(blockManagerNum);

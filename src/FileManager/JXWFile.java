@@ -8,6 +8,7 @@ import Id.Id;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class JXWFile implements File {
@@ -16,7 +17,9 @@ public class JXWFile implements File {
     /**
      * File中Block的统一BlockSize
      */
-    private static final int FileBlockSize = 1024;
+    private static final int FileBlockSize = 8;//每个Block的大小
+
+    private static final int copySize = 2;//副本个数
 
     /**
      * File的Id
@@ -41,7 +44,7 @@ public class JXWFile implements File {
     private long FileStart = 0;
 
     /**
-     * File的结束位置
+     * File的结束位置的后一个位置
      */
     private long FileEnd = 0;
 
@@ -49,7 +52,7 @@ public class JXWFile implements File {
 
     private byte[] FileBuffer = null;
 
-    private boolean isDirty = false;
+    private boolean isDirty = false;//缓冲区里的数据有没有脏
 
     /**
      * 创建FileId为fileId的File
@@ -61,9 +64,9 @@ public class JXWFile implements File {
         FileId = fileId;
         FileMetaPath = root + fileManager.getFileManagerName() + "/" + FileId.getName() + ".meta";
 
-        //如果File已经存在，通过FileMeta获得FileBlockLists
+        //如果File已经存在，通过FileMeta获得FileBlockLists和FileEnd
         if ((new java.io.File(FileMetaPath)).exists()) {
-            FileBlockLists = readMateGetFileBlockLists();
+            readMetaGetInfo();
         }
         else {//如果File不存在，写入FileMeta
             FileBlockLists = new ArrayList<>();
@@ -81,10 +84,10 @@ public class JXWFile implements File {
         FileManager = fileManager;
         FileId = fileIdTo;
         FileMetaPath = root + fileManager.getFileManagerName() + "/" + fileIdFrom.getName() + ".meta";
-        //如果FileFrom已经存在，通过FileFrom的FileMeta获得FileBlockLists
-        FileBlockLists = readMateGetFileBlockLists();
+        //如果FileFrom已经存在，通过FileFrom的FileMeta获得FileBlockLists和FileEnd
+        readMetaGetInfo();
         FileMetaPath = root + fileManager.getFileManagerName() + "/" + FileId.getName() + ".meta";
-
+        //更新FileTo的FileMeta
         upDateFileMeta();
     }
 
@@ -177,8 +180,6 @@ public class JXWFile implements File {
                 bufferPos += copyLength;
             }
         }
-
-        System.out.println(FileBuffer);
     }
 
     /**
@@ -242,9 +243,7 @@ public class JXWFile implements File {
                 System.arraycopy(b, bPos, contentToWrite, 0, writeLength);
                 bPos += writeLength;
 
-                List<Block> BlockListToInsert = new ArrayList<>();
-                BlockListToInsert.add(newBlock(contentToWrite));
-                BlockListsToInsert.add(BlockListToInsert);
+                BlockListsToInsert.add(newBlockList(contentToWrite));
             }
         }
         else {//从FileCurr所在的Block开始向后写
@@ -260,13 +259,10 @@ public class JXWFile implements File {
                 System.arraycopy(b, bPos, contentToWrite, fileCurrBlockCurrPos, bLength);
                 System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, fileCurrBlockCurrPos + bLength, fileCurrBlockRemainLength);
 
-                List<Block> BlockListToInsert = new ArrayList<>();
-                BlockListToInsert.add(newBlock(contentToWrite));
-                BlockListsToInsert.add(BlockListToInsert);
+                BlockListsToInsert.add(newBlockList(contentToWrite));
             }
             else {
                 byte[] contentToWrite = new byte[FileBlockSize];
-                List<Block> BlockListToInsert = new ArrayList<>();
 
                 if (fileCurrBlockCurrPos + bLength <= FileBlockSize){//FileCurr所在Block被切分的后半部分被分割
                     System.arraycopy(fileCurrBlockContent, 0, contentToWrite, 0, fileCurrBlockCurrPos);
@@ -276,23 +272,19 @@ public class JXWFile implements File {
                         fileCurrBlockCurrPos += FileBlockSize - (bLength + fileCurrBlockCurrPos);
                         fileCurrBlockRemainLength = fileCurrBlockContentSize - fileCurrBlockCurrPos;
                     }
-                    BlockListToInsert.add(newBlock(contentToWrite));
-                    BlockListsToInsert.add(BlockListToInsert);
+                    BlockListsToInsert.add(newBlockList(contentToWrite));
 
                     contentToWrite = new byte[fileCurrBlockRemainLength];
                     System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, 0, fileCurrBlockRemainLength);
 
-                    BlockListToInsert = new ArrayList<>();
-                    BlockListToInsert.add(newBlock(contentToWrite));
-                    BlockListsToInsert.add(BlockListToInsert);
+                    BlockListsToInsert.add(newBlockList(contentToWrite));
                 }
                 else {//需要写入的部分被分割
                     System.arraycopy(fileCurrBlockContent, 0, contentToWrite, 0, fileCurrBlockCurrPos);
                     System.arraycopy(b, bPos, contentToWrite, fileCurrBlockCurrPos, FileBlockSize - fileCurrBlockCurrPos);
                     bPos += FileBlockSize - fileCurrBlockCurrPos;
 
-                    BlockListToInsert.add(newBlock(contentToWrite));
-                    BlockListsToInsert.add(BlockListToInsert);
+                    BlockListsToInsert.add(newBlockList(contentToWrite));
 
                     int completeNewBlockOfB = (bLength - bPos) / FileBlockSize;
                     int remainLengthOfB = (bLength - bPos) % FileBlockSize;
@@ -301,16 +293,14 @@ public class JXWFile implements File {
                         System.arraycopy(b, bPos, contentToWrite, 0, FileBlockSize);
                         bPos += FileBlockSize;
 
-                        BlockListToInsert.add(newBlock(contentToWrite));
-                        BlockListsToInsert.add(BlockListToInsert);
+                        BlockListsToInsert.add(newBlockList(contentToWrite));
                     }
 
                     if (remainLengthOfB == 0){//没有需要写入的部分了，把FurrCurr的后半部分插入即可
                         contentToWrite = new byte[fileCurrBlockRemainLength];
                         System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, 0, fileCurrBlockRemainLength);
 
-                        BlockListToInsert.add(newBlock(contentToWrite));
-                        BlockListsToInsert.add(BlockListToInsert);
+                        BlockListsToInsert.add(newBlockList(contentToWrite));
                     }
                     else {
                         int remainLengthToWrite = remainLengthOfB + fileCurrBlockRemainLength;
@@ -319,8 +309,7 @@ public class JXWFile implements File {
                             System.arraycopy(b, bPos, contentToWrite, 0, remainLengthOfB);
                             System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, remainLengthOfB, fileCurrBlockRemainLength);
 
-                            BlockListToInsert.add(newBlock(contentToWrite));
-                            BlockListsToInsert.add(BlockListToInsert);
+                            BlockListsToInsert.add(newBlockList(contentToWrite));
                         }
                         else {
                             contentToWrite = new byte[FileBlockSize];
@@ -329,22 +318,14 @@ public class JXWFile implements File {
                             fileCurrBlockCurrPos += (FileBlockSize - remainLengthOfB);
                             fileCurrBlockRemainLength = fileCurrBlockContentSize - fileCurrBlockCurrPos;
 
-                            BlockListToInsert.add(newBlock(contentToWrite));
-                            BlockListsToInsert.add(BlockListToInsert);
+                            BlockListsToInsert.add(newBlockList(contentToWrite));
 
                             contentToWrite = new byte[fileCurrBlockRemainLength];
                             System.arraycopy(fileCurrBlockContent, fileCurrBlockCurrPos, contentToWrite, 0, fileCurrBlockRemainLength);
 
-                            BlockListToInsert.add(newBlock(contentToWrite));
-                            BlockListsToInsert.add(BlockListToInsert);
+                            BlockListsToInsert.add(newBlockList(contentToWrite));
                         }
                     }
-                }
-
-                //备份FileCurr之后的Block
-                for (int i = fileCurrBlockIndex; i < FileBlockLists.size(); i++){//顺序查找每一个Block的副本List，获得FileCurr所在的Block的Index和再这个Block中的offset
-                    List<Block> blockList = FileBlockLists.get(i);
-                    blockList.add(newBlock(getBlockContent(blockList)));
                 }
             }
         }
@@ -361,26 +342,46 @@ public class JXWFile implements File {
         upDateFileMeta();
     }
 
+    /**
+     * 更新FileBuffer
+     * @param b 插入到FileCurr后的内容
+     */
     @Override
     public void bufferedWrite(byte[] b) {
+        loadFile();
 
-    }
+        int newLength = b.length + FileBuffer.length;
+        byte[] newContent = new byte[newLength];
+        int copyPos = 0;
+        if ((int)FileCurr != 0){
+            System.arraycopy(FileBuffer, 0, newContent, copyPos, (int)(FileCurr));
+            copyPos += (int)(FileCurr);
+        }
 
-    public Block newBlock(byte[] content){
-        return ((JXWFileManager)FileManager).getRandomBlockManager().newBlock(content);
+        System.arraycopy(b, 0, newContent, copyPos, b.length);
+        copyPos += b.length;
+
+        if (FileCurr < FileBuffer.length) {
+            System.arraycopy(FileBuffer, (int)(FileCurr), newContent, copyPos, (int)(FileBuffer.length - FileCurr));
+        }
+
+        FileBuffer = newContent;
+        if (!isDirty) {
+            isDirty = true;
+        }
     }
 
     /**
-     * 获得文件的大小，同时更新FileEnd游标
-     * @return File的大小
+     * 获得有备份个数个的内容是content的Block的List
+     * @param content Block中的内容
+     * @return 备份个数个的Block的BlockList
      */
-    public long getFileSize(){
-        FileEnd = 0;
-        for (List<Block> blockList : FileBlockLists){
-            FileEnd += getBlockContentSize(blockList);
+    private List<Block> newBlockList(byte[] content) {
+        List<Block> blockList = new ArrayList<>();
+        for (int i = 0 ; i < copySize; i++) {
+            blockList.add(((JXWFileManager)FileManager).getRandomBlockManager().newBlock(content));
         }
-
-        return FileEnd;
+        return blockList;
     }
 
     /**
@@ -389,7 +390,7 @@ public class JXWFile implements File {
     public void upDateFileMeta(){
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(getFileMetaPath()));
-            bw.write("size: " + getFileSize() + "\n");
+            bw.write("size: " + FileEnd + "\n");
             bw.write("block size: " + FileBlockSize + "\n");
             bw.write("logic size:\n");
             for (List<Block> blockList : FileBlockLists) {
@@ -404,24 +405,29 @@ public class JXWFile implements File {
         }
     }
 
-    private List<List<Block>> readMateGetFileBlockLists(){
-        List<List<Block>> Lists = new ArrayList<>();
+    //读FileMeta获得FileBlockLists个FileEnd
+    private void readMetaGetInfo() {
+        FileBlockLists = new ArrayList<>();
         try {
             FileReader fr = new FileReader(FileMetaPath);
             BufferedReader br = new BufferedReader(fr);
-            for (int i = 0; i < 3; i++){
+
+            String line =  br.readLine();//读第一行获得FileSize
+            String[] args = line.split(" ");
+            FileEnd = Long.parseLong(args[1]);
+
+            for (int i = 0; i < 2; i++){//跳过两行
                 br.readLine();
             }
 
-            String line = null;
-            while ((line = br.readLine()) != null){
+            while ((line = br.readLine()) != null){//如果非空，读FileBlockList
                 String[] cols = line.split(" ");
                 List<Block> blockList = new ArrayList<>();
                 for (String bmBlock : cols){
-                    String[] args = bmBlock.split(",");
+                    args = bmBlock.split(",");
                     blockList.add(new JXWBlock(args[0], new JXWBlockId(args[1])));
                 }
-                Lists.add(blockList);
+                FileBlockLists.add(blockList);
             }
             br.close();
             fr.close();
@@ -429,8 +435,6 @@ public class JXWFile implements File {
         catch (IOException e){
             e.printStackTrace();
         }
-
-        return Lists;
     }
 
     /**
@@ -446,17 +450,14 @@ public class JXWFile implements File {
             case MOVE_CURR:
                 result = FileCurr + offset;
                 result = getValidPosition(result);
-                FileCurr = result;
                 break;
             case MOVE_HEAD:
                 result = FileStart + offset;
                 result = getValidPosition(result);
-                FileStart = result;
                 break;
             case MOVE_TAIL:
                 result = FileEnd + offset;
                 result = getValidPosition(result);
-                FileEnd = result;
                 break;
         }
 
@@ -477,10 +478,41 @@ public class JXWFile implements File {
         return pos;
     }
 
+    /**
+     * 如果Buffer中的数据脏了，写回并更新FileMeta
+     */
     @Override
     public void close() {
-        if (isDirty){
+        if (isDirty) {
+            if (FileBuffer.length != 0) {
+                FileEnd = FileBuffer.length;
 
+                FileBlockLists = new ArrayList<>();
+                int copyPos = 0;
+                int completeBlockCount = (int)((FileEnd - copyPos) / FileBlockSize);
+                int remainBlockLength = (int)((FileEnd - copyPos) % FileBlockSize);
+
+                for (int i = 0; i < completeBlockCount; i++) {
+                    byte[] content = new byte[FileBlockSize];
+                    System.arraycopy(FileBuffer, copyPos, content, 0, FileBlockSize);
+                    copyPos += FileBlockSize;
+
+                    FileBlockLists.add(newBlockList(content));
+                }
+
+                if (remainBlockLength > 0) {
+                    byte[] content = new byte[remainBlockLength];
+                    System.arraycopy(FileBuffer, copyPos, content, 0, remainBlockLength);
+
+                    FileBlockLists.add(newBlockList(content));
+                }
+            }
+            else {
+                FileEnd = 0;
+                FileBlockLists = new ArrayList<>();
+            }
+            FileBuffer = null;
+            upDateFileMeta();
         }
     }
 

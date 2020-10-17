@@ -14,28 +14,31 @@ public class SmartTools {
 
     //获取File的File内容；能够从⽂件指定位置，读去指定⻓度的内容并且打印在控制台。
     public static void smartCat(String fileName, FileManager fm){
-        int where = 0;//从哪里移动当前游标
+        int where = 1;//从哪里移动当前游标
         int offset = 0;//偏移
-        int length = 10;//需要读取的长度
+        int length = 100;//需要读取的长度
         File file = new JXWFile(fm, new JXWFileId(fileName));
 
         file.move(offset, where);//移动当前游标
-        System.out.println(Arrays.toString(file.bufferedRead(length)));//打印到console
+        System.out.println(new String(file.bufferedRead(length)));//打印到console
+        file.close();
     }
 
     //将写⼊指针移动到指定位置后，开始读取⽤户数据，并且写⼊到⽂件中
     public static void smartWrite(String fileName, int index, FileManager fm){
         File file = new JXWFile(fm, new JXWFileId(fileName));
 
-        file.move(index, 0);//移动当前游标到文件开始偏移index个偏移量的地方
+        int where = 1;//从哪里移动当前游标
+        file.move(index, where);//移动当前游标到文件开始偏移index个偏移量的地方
         byte[] contentToWrite = readFromConsole();//从控制台读需要写入的数据
-        file.write(contentToWrite);//写入数据
+        file.bufferedWrite(contentToWrite);//写入数据
+        file.close();//清空Buffer并写回
     }
 
     //读取block的data并⽤16禁⽌的形式打印到控制台
     public static void smartHex(Block block){
         byte[] content = block.read();
-        System.out.println(Arrays.toString(content));
+        System.out.println(parseBytesToHex(content));
     }
 
     //复制File到另⼀个File
@@ -45,6 +48,18 @@ public class SmartTools {
         File file = new JXWFile(fm, new JXWFileId(from), new JXWBlockId(to));
     }
 
+    private static String parseBytesToHex(byte[] content) {
+        StringBuilder sb = new StringBuilder();
+        for (byte i : content) {
+            String hex = Integer.toHexString(i & 0xFF);
+            if (hex.length() < 2) {
+                sb.append(0);
+            }
+            sb.append(hex);
+        }
+
+        return sb.toString();
+    }
 
     private static byte[] readFromConsole(){
         byte[] result = new byte[0];
