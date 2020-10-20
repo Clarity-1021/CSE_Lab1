@@ -1,4 +1,4 @@
-package Initiater;
+package SmartTools.TestSmartTools;
 
 import BlockManager.*;
 import FileManager.*;
@@ -6,9 +6,21 @@ import ErrorManager.ErrorLog;
 
 import java.io.File;
 
-public class InitiateManager {
+//初始化
+public class INI {
+    public static final int blockManagerCount = 10;//BlockManager的个数
+    public static final int fileManagerCount = 3;//FileManager的个数
+
+    public static void main(String[] args) {
+        //初始化指定个数的BlockManager
+//        initiateBM(blockManagerCount);
+
+        //初始化指定个数个FileManager
+        initiateFM(fileManagerCount, blockManagerCount);
+    }
+
     //清空原来的BM，创建指定数目个BlockManagers
-    public static void initiateBM(int bmCount){
+    private static void initiateBM(int bmCount){
         File bmDir = new File("./output/BlockManagers/");
         String[] children = bmDir.list();
         if (children != null){
@@ -38,7 +50,7 @@ public class InitiateManager {
     }
 
     //清空原来的FM，创建指定数目个FileManagers
-    public static void initiateFM(int fmCount, int bmCount){
+    private static void initiateFM(int fmCount, int bmCount){
         File fmDir = new File("./output/FileManagers/");
         String[] children = fmDir.list();
         if (children != null){

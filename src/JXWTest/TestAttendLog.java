@@ -1,3 +1,5 @@
+package JXWTest;
+
 import ErrorManager.ErrorLog;
 
 public class TestAttendLog {

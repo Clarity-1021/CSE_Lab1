@@ -1,4 +1,4 @@
-package TestSmartTool;
+package SmartTools.TestSmartTools;
 
 import BlockManager.*;
 import SmartTools.SmartTools;

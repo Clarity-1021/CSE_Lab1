@@ -1,3 +1,5 @@
+package JXWTest;
+
 import java.io.*;
 
 public class TestBlockDataWrite {

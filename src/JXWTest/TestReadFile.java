@@ -1,3 +1,5 @@
+package JXWTest;
+
 import BlockManager.Block;
 import BlockManager.JXWBlock;
 import BlockManager.JXWBlockId;
