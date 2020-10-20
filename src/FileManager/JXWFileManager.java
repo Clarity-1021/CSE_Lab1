@@ -2,7 +2,7 @@ package FileManager;
 
 import BlockManager.BlockManager;
 import BlockManager.JXWBlockManager;
-import ErrorManager.ErrorLog;
+import ErrorManager.ErrorCode;
 import Id.Id;
 
 import java.util.Random;
@@ -26,28 +26,28 @@ public class JXWFileManager implements FileManager {
      */
     private int BlockManagerCount;
 
-    public JXWFileManager(int blockManagerCount){
+    public JXWFileManager(int blockManagerCount) throws ErrorCode{
         FileManagerName = "FM-" + FileManagerNumCount++;
         BlockManagerCount = blockManagerCount;
 
         //创建BlockManager的目录
         java.io.File file = new java.io.File(root + FileManagerName);
         if (!file.exists()){//目录不存在
-            if (!file.mkdir()){//创建目录不成功，记录在日志里面
-                ErrorLog.logErrorMessage("FileManager-" + FileManagerName + "目录创建失败");
+            if (!file.mkdir()){//创建目录不成功，抛出异常
+                throw new ErrorCode(ErrorCode.FILE_MANAGER_DIR_CONSTRUCT_FAILED);
             }
         }
     }
 
-    public JXWFileManager(int fileManagerNum, int blockManagerCount){
+    public JXWFileManager(int fileManagerNum, int blockManagerCount) throws ErrorCode{
         FileManagerName = "FM-" + fileManagerNum;
         BlockManagerCount = blockManagerCount;
 
         //创建BlockManager的目录
         java.io.File file = new java.io.File(root + FileManagerName);
         if (!file.exists()){//目录不存在
-            if (!file.mkdir()){//创建目录不成功，记录在日志里面
-                ErrorLog.logErrorMessage("FileManager-" + FileManagerName + "目录创建失败");
+            if (!file.mkdir()){//创建目录不成功，抛出异常
+                throw new ErrorCode(ErrorCode.FILE_MANAGER_DIR_CONSTRUCT_FAILED);
             }
         }
     }
@@ -63,8 +63,12 @@ public class JXWFileManager implements FileManager {
      * @return 对应的File
      */
     @Override
-    public File getFile(Id fileId) {
-        return new JXWFile(this, fileId);
+    public File getFile(Id fileId) throws ErrorCode {
+        File file = null;
+
+        file = new JXWFile(this, fileId, JXWFile.GET_MODE);
+
+        return file;
     }
 
     public BlockManager getRandomBlockManager(){
@@ -77,7 +81,11 @@ public class JXWFileManager implements FileManager {
      * @return FileId给定的新的File
      */
     @Override
-    public File newFile(Id fileId) {
-        return new JXWFile(this, fileId);
+    public File newFile(Id fileId) throws ErrorCode {
+        File file = null;
+
+        file = new JXWFile(this, fileId, JXWFile.NEW_MODE);
+
+        return file;
     }
 }

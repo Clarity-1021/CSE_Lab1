@@ -1,6 +1,6 @@
 package BlockManager;
 
-import ErrorManager.ErrorLog;
+import ErrorManager.ErrorCode;
 import Id.Id;
 
 import java.io.*;
@@ -18,38 +18,38 @@ public class JXWBlockManager implements BlockManager {
      */
     private String BlockManagerName;
 
-    public JXWBlockManager(){
+    public JXWBlockManager() throws ErrorCode{
         BlockManagerName = "BM-" + BlockManagerNumCount++;
 
         //创建BlockManager的目录
         File file = new File(root + BlockManagerName);
         if (!file.exists()){//目录不存在
             if (!file.mkdir()){//创建目录不成功，记录在日志里面
-                ErrorLog.logErrorMessage("BlockManager-" + BlockManagerName + "目录创建失败");
+                throw new ErrorCode(ErrorCode.BLOCK_MANAGER_DIR_CONSTRUCT_FAILED);
             }
         }
     }
 
-    public JXWBlockManager(int blockManagerNum){
+    public JXWBlockManager(int blockManagerNum) throws ErrorCode{
         BlockManagerName = "BM-" + blockManagerNum;
 
         //创建BlockManager的目录
         File file = new File(root + BlockManagerName);
         if (!file.exists()){//目录不存在
             if (!file.mkdir()){//创建目录不成功，记录在日志里面
-                ErrorLog.logErrorMessage("BlockManager-" + BlockManagerName + "目录创建失败");
+                throw new ErrorCode(ErrorCode.BLOCK_MANAGER_DIR_CONSTRUCT_FAILED);
             }
         }
     }
 
-    public JXWBlockManager(String blockManagerName){
+    public JXWBlockManager(String blockManagerName) throws ErrorCode{
         BlockManagerName = blockManagerName;
 
         //创建BlockManager的目录
         File file = new File(root + BlockManagerName);
         if (!file.exists()){//目录不存在
             if (!file.mkdir()){//创建目录不成功，记录在日志里面
-                ErrorLog.logErrorMessage("BlockManager-" + BlockManagerName + "目录创建失败");
+                throw new ErrorCode(ErrorCode.BLOCK_MANAGER_DIR_CONSTRUCT_FAILED);
             }
         }
     }

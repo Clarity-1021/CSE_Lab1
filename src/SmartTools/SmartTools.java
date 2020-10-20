@@ -1,6 +1,7 @@
 package SmartTools;
 
 import BlockManager.*;
+import ErrorManager.ErrorCode;
 import FileManager.*;
 
 import java.io.BufferedReader;
@@ -12,29 +13,61 @@ public class SmartTools {
 
     //获取File的File内容；能够从⽂件指定位置，读去指定⻓度的内容并且打印在控制台。
     public static void smartCat(String fileName, FileManager fm){
-        int where = 1;//从哪里移动当前游标
+        int where = File.MOVE_HEAD;//从哪里移动当前游标
         int offset = 0;//偏移
         int length = 100;//需要读取的长度
-        File file = new JXWFile(fm, new JXWFileId(fileName));
 
-        file.move(offset, where);//移动当前游标
-        System.out.println(new String(file.bufferedRead(length)));//打印到console
-        file.close();
+        try {
+            File file = fm.getFile(new JXWFileId(fileName));
+            file.move(offset, where);//移动当前游标
+            System.out.println(new String(file.read(length)));//打印到console
+            file.close();
+        }
+        catch (ErrorCode e) {
+            e.printStackTrace();
+        }
     }
 
     //将写⼊指针移动到指定位置后，开始读取⽤户数据，并且写⼊到⽂件中
     public static void smartWrite(String fileName, int index, FileManager fm){
-        File file = new JXWFile(fm, new JXWFileId(fileName));
+        File file = null;
 
-        int where = 2;//从哪里移动当前游标
-        int newSize = 8;//更新为新长度
+        try {
+            file = fm.getFile(new JXWFileId(fileName));//写已存在的
+        }
+        catch (ErrorCode e) {
+            e.printStackTrace();
+        }
+
+        if (file == null) {//File不存在，新建File
+            file = fm.newFile(new JXWFileId(fileName));//写新的
+        }
+
+        int where = File.MOVE_HEAD;//从哪里移动当前游标
+        boolean doSetSize = false;//是否重设文件
+        int newSize = 0;//更新为新长度
+
         file.move(index, where);//移动当前游标到文件开始偏移index个偏移量的地方
         byte[] contentToWrite = readFromConsole();//从控制台读需要写入的数据
-        file.bufferedWrite(contentToWrite);//写入数据
 
-        file.setSize(newSize);//把文件更新为新长度
+        try {
+            file.write(contentToWrite);//写入数据
+        }
+        catch (ErrorCode e) {
+            e.printStackTrace();
+        }
+
+        if (doSetSize) {
+            try {
+                file.setSize(newSize);//把文件更新为新长度
+            }
+            catch (ErrorCode e) {
+                e.printStackTrace();
+            }
+        }
 
         file.close();//清空Buffer并写回
+
     }
 
     //读取block的data并⽤16禁⽌的形式打印到控制台
@@ -47,17 +80,22 @@ public class SmartTools {
     //1. 读取已有的file的fileData，写⼊到新File中
     //2. 直接复制File的FileMeta，这个⽅法的正确性以来于Block是不可重写的，建议使⽤这个⽅法实现
     public static void smartCopy(String from, String to, FileManager fm){
-        new JXWFile(fm, new JXWFileId(from), new JXWBlockId(to));
+        try {
+            new JXWFile(fm, new JXWFileId(from), new JXWBlockId(to));
+        }
+        catch (ErrorCode e) {
+            e.printStackTrace();
+        }
     }
 
-    private static String parseBytesToHex(byte[] content) {
+    public static String parseBytesToHex(byte[] content) {
         StringBuilder sb = new StringBuilder();
         for (byte i : content) {
             String hex = Integer.toHexString(i & 0xFF);
             if (hex.length() < 2) {
                 sb.append(0);
             }
-            sb.append(hex);
+            sb.append(hex).append(" ");
         }
 
         return sb.toString();

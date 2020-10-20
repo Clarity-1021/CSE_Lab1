@@ -1,7 +1,8 @@
 package BlockManager;
 
-import ErrorManager.ErrorLog;
+import ErrorManager.ErrorCode;
 import Id.Id;
+import SmartTools.SmartTools;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
@@ -40,7 +41,7 @@ public class JXWBlock implements Block {
      * @param blockManagerName BlockManagerName
      * @param content 写入Block的byte数组
      */
-    JXWBlock(String blockManagerName, byte[] content){
+    JXWBlock(String blockManagerName, byte[] content) throws ErrorCode{
         BlockManagerName = blockManagerName;
         BlockContentSize = content.length;
         BlockId = new JXWBlockId();
@@ -55,7 +56,7 @@ public class JXWBlock implements Block {
      * @param blockManagerName BlockManagerName
      * @param blockId BlockId
      */
-    public JXWBlock(String blockManagerName, Id blockId) {
+    public JXWBlock(String blockManagerName, Id blockId) throws ErrorCode {
         BlockManagerName = blockManagerName;
         BlockId = new JXWBlockId(blockId);
         BlockMetaPath = root + BlockManagerName + "/" + BlockId.getName() + ".meta";
@@ -68,7 +69,7 @@ public class JXWBlock implements Block {
     /**
      * 读BlockMeta获得BlockContentSize和BlockCheckSum
      */
-    private void readMetaGetInfo() {
+    private void readMetaGetInfo() throws ErrorCode {
         File file = new File(BlockMetaPath);
         if (!file.exists()){
             return;
@@ -83,7 +84,7 @@ public class JXWBlock implements Block {
             fr.close();
         }
         catch (IOException e){
-            e.printStackTrace();
+            throw new ErrorCode(ErrorCode.IO_EXCEPTION);
         }
     }
 
@@ -110,22 +111,38 @@ public class JXWBlock implements Block {
      * @return BlockDate中存的byte数组
      */
     @Override
-    public byte[] read(){//在大文件处理是可以提升性能
+    public byte[] read() throws ErrorCode{//在大文件处理是可以提升性能
         byte[] result = new byte[0];
 
         try {
             FileChannel fc = new RandomAccessFile(BlockDataPath, "r").getChannel();
             //把缓冲区的内容加载到物理内存中
             MappedByteBuffer mbb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size()).load();
+//            System.out.println("fileLength=" + fc.size());
             result = new byte[(int)fc.size()];
             if (mbb.remaining() > 0){//缓冲区中存在剩余元素
                 mbb.get(result, 0, mbb.remaining());
             }
+//            System.out.println("String=" + new String(result));
             fc.close();
         }
         catch (IOException e){
-            e.printStackTrace();
+//            e.printStackTrace();
+            throw new ErrorCode(ErrorCode.IO_EXCEPTION);
         }
+//        File file = new File(BlockDataPath);
+//        ByteArrayOutputStream bos = new ByteArrayOutputStream((int)file.length());
+//        try(BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
+//            byte[] buffer = new byte[(int)file.length()];
+//            int len = 0;
+//            while (-1 != (len = bis.read(buffer, 0, (int)file.length()))) {
+//                bos.write(buffer, 0, len);
+//            }
+//            result = bos.toByteArray();
+//        }
+//        catch (IOException e) {
+//            new ErrorCode(ErrorCode.IO_EXCEPTION).printStackTrace();
+//        }
 
         return result;
     }
@@ -143,7 +160,7 @@ public class JXWBlock implements Block {
      * 更新Block的信息
      * @param content BlockDate中需要写入的内容
      */
-    public void writeBlockMessage(byte[] content) {
+    public void writeBlockMessage(byte[] content) throws ErrorCode {
         BlockCheckSum = getBlockDateCheckSum(content);
         //创建并把content写入data文件
         writeBlockData(content);
@@ -154,14 +171,14 @@ public class JXWBlock implements Block {
     /**
      * 创建Block的meta文件，把BlockSize和checksum写入meta文件
      */
-    public void writeBlockMeta(){
+    public void writeBlockMeta() throws ErrorCode{
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(BlockMetaPath));
             bw.write("size: " + BlockContentSize + "\n");//写入BlockContentSize
             bw.write("checksum: " + BlockCheckSum);//写入checksum用于后期检验Block是否被损坏
             bw.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ErrorCode(ErrorCode.IO_EXCEPTION);
         }
     }
 
@@ -169,13 +186,13 @@ public class JXWBlock implements Block {
      * 创建Block的data文件，把content写入data文件中
      * @param content 需要被写入BlockData的内容
      */
-    public void writeBlockData(byte[] content){
+    public void writeBlockData(byte[] content) throws ErrorCode{
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(BlockDataPath));
-            bw.write(new String(content, 0, BlockContentSize));
-            bw.close();
+            FileOutputStream fos = new FileOutputStream(BlockDataPath);
+            fos.write(content);
+            fos.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new ErrorCode(ErrorCode.IO_EXCEPTION);
         }
     }
 
@@ -184,7 +201,8 @@ public class JXWBlock implements Block {
      * @param content 给的字段
      * @return checkSum
      */
-    public String getBlockDateCheckSum(byte[] content) {
+    public String getBlockDateCheckSum(byte[] content) throws ErrorCode {
+//        System.out.println("HEX=" + SmartTools.parseBytesToHex(content));
         byte[] code = new byte[0];
 
         try{
@@ -193,17 +211,21 @@ public class JXWBlock implements Block {
             code = md5.digest();
         }
         catch (Exception e){
-            new Exception("No MD5 Algorithm.").printStackTrace();//打印异常和异常出现的位置
+            throw new ErrorCode(ErrorCode.IO_EXCEPTION);//打印异常和异常出现的位置
         }
 
-        return DatatypeConverter.printHexBinary(code).toLowerCase();
+        String temp = DatatypeConverter.printHexBinary(code).toLowerCase();
+//        System.out.println("checkSum=" + temp);
+
+//        return DatatypeConverter.printHexBinary(code).toLowerCase();
+        return temp;
     }
 
     /**
      * 通过BlockData中的Content计算checkSum并与Block真正的checkSum对比，如果一致则未被损坏
      * @return 被损坏返回true，未被损坏返回false
      */
-    public boolean isBlockDamaged() {
+    public boolean isBlockDamaged() throws ErrorCode {
         return !getBlockDateCheckSum(read()).equals(BlockCheckSum);
     }
 }

@@ -1,8 +1,8 @@
 package SmartTools.TestSmartTools;
 
 import BlockManager.*;
+import ErrorManager.ErrorCode;
 import FileManager.*;
-import ErrorManager.ErrorLog;
 
 import java.io.File;
 
@@ -12,15 +12,12 @@ public class INI {
     public static final int fileManagerCount = 3;//FileManager的个数
 
     public static void main(String[] args) {
-        //初始化指定个数的BlockManager
-//        initiateBM(blockManagerCount);
-
-        //初始化指定个数个FileManager
-        initiateFM(fileManagerCount, blockManagerCount);
+        //初始化指定个数个FileManager和指定个数的BlockManager
+        initiateFM();
     }
 
     //清空原来的BM，创建指定数目个BlockManagers
-    private static void initiateBM(int bmCount){
+    private static void initiateBM(){
         File bmDir = new File("./output/BlockManagers/");
         String[] children = bmDir.list();
         if (children != null){
@@ -32,25 +29,30 @@ public class INI {
                 for (String block : blocks){
                     boolean success = deleteDir(new File(bmDir + bm, block));
                     if (!success){
-                        ErrorLog.logErrorMessage(bm + " " + block + " is not deleted successfully.");
+                        new ErrorCode(ErrorCode.DELETE_FAILED).printStackTrace();
                     }
                 }
 
                 boolean success = deleteDir(bmPath);
                 if (!success){
-                    ErrorLog.logErrorMessage(bm + " is not deleted successfully.");
+                    new ErrorCode(ErrorCode.DELETE_FAILED).printStackTrace();
                 }
             }
         }
 
         BlockManager bm;
-        for (int i = 0; i < bmCount; i++) {
-            bm = new JXWBlockManager();
+        for (int i = 0; i < blockManagerCount; i++) {
+            try {
+                bm = new JXWBlockManager();
+            }
+            catch (ErrorCode e) {
+                e.printStackTrace();
+            }
         }
     }
 
     //清空原来的FM，创建指定数目个FileManagers
-    private static void initiateFM(int fmCount, int bmCount){
+    private static void initiateFM(){
         File fmDir = new File("./output/FileManagers/");
         String[] children = fmDir.list();
         if (children != null){
@@ -62,23 +64,28 @@ public class INI {
                 for (String file : files){
                     boolean success = deleteDir(new File(fmDir + fm, file));
                     if (!success){
-                        ErrorLog.logErrorMessage(fm + " " + file + " is not deleted successfully.");
+                        new ErrorCode(ErrorCode.DELETE_FAILED).printStackTrace();
                     }
                 }
 
                 boolean success = deleteDir(fmPath);
                 if (!success){
-                    ErrorLog.logErrorMessage(fm + " is not deleted successfully.");
+                    new ErrorCode(ErrorCode.DELETE_FAILED).printStackTrace();
                 }
             }
         }
 
         FileManager fm;
-        for (int i = 0; i < fmCount; i++) {
-            fm = new JXWFileManager(bmCount);
+        for (int i = 0; i < fileManagerCount; i++) {
+            try {
+                fm = new JXWFileManager(blockManagerCount);
+            }
+            catch (ErrorCode e) {
+                e.printStackTrace();
+            }
         }
 
-        initiateBM(bmCount);
+        initiateBM();
     }
 
     /**

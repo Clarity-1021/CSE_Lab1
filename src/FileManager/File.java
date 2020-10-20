@@ -9,9 +9,7 @@ public interface File {
     Id getFileId();
     FileManager getFileManager();
     byte[] read(int length);
-    byte[] bufferedRead(int length);
     void write(byte[] b);
-    void bufferedWrite(byte[] b);
     default long pos() {
         return move(0, MOVE_CURR);
     }
