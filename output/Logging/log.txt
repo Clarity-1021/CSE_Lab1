@@ -97,3 +97,187 @@
 [2020-10-21 03:36:11]: file curr point overflow
 [2020-10-21 03:43:19]: file is not exist
 [2020-10-21 03:43:34]: file exist
+[2020-10-22 20:36:20]: file does not exist
+[2020-10-22 21:13:23]: delete failed
+[2020-10-22 21:13:23]: delete failed
+[2020-10-22 21:13:23]: delete failed
+[2020-10-22 21:13:23]: delete failed
+[2020-10-22 21:13:23]: delete failed
+[2020-10-22 21:15:02]: file does not exist
+[2020-10-22 21:31:28]: file does not exist
+[2020-10-22 21:35:12]: file does not exist
+[2020-10-22 21:48:34]: block checksum check failed
+[2020-10-22 21:49:33]: block checksum check failed
+[2020-10-22 21:49:33]: file is damaged
+[2020-10-22 21:55:24]: file curr point overflow
+[2020-10-22 21:57:20]: file curr point overflow
+[2020-10-22 22:07:41]: block checksum check failed
+[2020-10-22 22:07:41]: block checksum check failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:49]: delete failed
+[2020-10-22 22:15:50]: delete failed
+[2020-10-22 22:15:50]: delete failed
+[2020-10-22 22:15:50]: delete failed
+[2020-10-22 22:15:50]: delete failed
+[2020-10-22 22:16:15]: file does not exist
+[2020-10-22 22:16:43]: file does not exist
+[2020-10-22 22:19:35]: file does not exist
+[2020-10-22 22:20:45]: file does not exist
+[2020-10-22 22:22:00]: block checksum check failed
+[2020-10-22 22:24:35]: block checksum check failed
+[2020-10-22 22:24:35]: block checksum check failed
+[2020-10-22 22:25:05]: block checksum check failed
+[2020-10-22 22:25:05]: file is damaged
+[2020-10-22 22:34:30]: file does not exist
+[2020-10-22 22:37:18]: block checksum check failed
+[2020-10-22 22:37:19]: block checksum check failed
+[2020-10-22 22:37:19]: file is damaged
+[2020-10-22 22:42:23]: file is damaged
+[2020-10-22 22:42:23]: file exists
+[2020-10-22 23:13:03]: file is damaged
+[2020-10-22 23:20:03]: file exists
+[2020-10-22 23:20:08]: file is damaged
+[2020-10-22 23:22:03]: file is damaged
+[2020-10-22 23:28:44]: file is damaged
+[2020-10-22 23:29:33]: file is damaged
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed
+[2020-10-22 23:29:45]: delete failed

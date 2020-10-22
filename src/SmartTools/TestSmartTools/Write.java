@@ -5,9 +5,9 @@ import SmartTools.SmartTools;
 
 //写文件
 public class Write {
-    public static final int blockManagerCount = 10;
-    public static final int fileManagerNum = 2;//FileManager
-    public static final String fileName = "jxw_1";//文件名
+    public static final int blockManagerCount = 3;
+    public static final int fileManagerNum = 1;//FileManager
+    public static final String fileName = "file1";//文件名
     public static final int index = 0;//偏移量
 
     public static void main(String[] args) {

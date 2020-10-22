@@ -37,24 +37,34 @@ public class SmartTools {
         }
         catch (ErrorCode e) {
             e.printStackTrace();
-        }
-
-        if (file == null) {//File不存在，新建File
-            file = fm.newFile(new JXWFileId(fileName));//写新的
+            if (e.getErrorCode() == ErrorCode.FILE_NOT_EXIST) {//File不存在，新建File，确保file不为null
+                file = fm.newFile(new JXWFileId(fileName));//写新的
+            }
+            else {
+                return;
+            }
         }
 
         int where = File.MOVE_HEAD;//从哪里移动当前游标
+        boolean doWrite = true;//是否写文件
         boolean doSetSize = false;//是否重设文件
-        int newSize = 0;//更新为新长度
+        int newSize = 20;//更新为新长度
 
-        file.move(index, where);//移动当前游标到文件开始偏移index个偏移量的地方
-        byte[] contentToWrite = readFromConsole();//从控制台读需要写入的数据
+        if (doWrite) {
+            file.move(index, where);//移动当前游标到文件开始偏移index个偏移量的地方
+            byte[] contentToWrite = readFromConsole();//从控制台读需要写入的数据
 
-        try {
-            file.write(contentToWrite);//写入数据
-        }
-        catch (ErrorCode e) {
-            e.printStackTrace();
+            try {
+                file.write(contentToWrite);//写入数据
+            }
+            catch (ErrorCode e) {
+                e.printStackTrace();
+                if (e.getErrorCode() == ErrorCode.INSERT_LENGTH_OVERFLOW) {
+                    System.out.println("[INFO] the content you want to write will let the file size too big");
+                    file.close();
+                    return;
+                }
+            }
         }
 
         if (doSetSize) {
@@ -63,6 +73,11 @@ public class SmartTools {
             }
             catch (ErrorCode e) {
                 e.printStackTrace();
+                if (e.getErrorCode() == ErrorCode.INSERT_LENGTH_OVERFLOW) {
+                    System.out.println("[INFO] the content you want to write will let the file size too big");
+                    file.close();
+                    return;
+                }
             }
         }
 
@@ -79,9 +94,9 @@ public class SmartTools {
     //复制File到另⼀个File
     //1. 读取已有的file的fileData，写⼊到新File中
     //2. 直接复制File的FileMeta，这个⽅法的正确性以来于Block是不可重写的，建议使⽤这个⽅法实现
-    public static void smartCopy(String from, String to, FileManager fm){
+    public static void smartCopy(String from, String to, FileManager fmFrom, FileManager fmTo){
         try {
-            new JXWFile(fm, new JXWFileId(from), new JXWBlockId(to));
+            new JXWFile(fmFrom, new JXWFileId(from), fmTo, new JXWBlockId(to));
         }
         catch (ErrorCode e) {
             e.printStackTrace();

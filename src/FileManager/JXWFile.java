@@ -23,7 +23,7 @@ public class JXWFile implements File {
     /**
      * File中Block的统一BlockSize
      */
-    private static final int FileBlockSize = 8;//每个Block的大小
+    private int FileBlockSize = 3;//每个Block的大小
 
     /**
      * LogicBlock的副本数目
@@ -78,8 +78,9 @@ public class JXWFile implements File {
 
         switch (MODE) {
             case NEW_MODE:
-                //如果File已经存在，通过FileMeta获得FileBlockLists和FileEnd
+                //如果File已经存在抛出异常
                 if ((new java.io.File(FileMetaPath)).exists()) {
+                    System.out.println("[INFO] the file you want to create has been existing");
                     throw new ErrorCode(ErrorCode.FILE_EXIST);
                 }
                 else {//如果File不存在，写入FileMeta
@@ -93,6 +94,7 @@ public class JXWFile implements File {
                     readMetaGetInfo();
                 }
                 else {//如果File不存在，抛出异常
+                    System.out.println("[INFO] the file you want to get does not exist");
                     throw new ErrorCode(ErrorCode.FILE_NOT_EXIST);
                 }
                 break;
@@ -101,23 +103,25 @@ public class JXWFile implements File {
 
     /**
      * 创建FileId为fileIdTo的File，FileMeta和fileIdFrom的一致
-     * @param fileManager 这个File的FileManager
+     * @param fileManagerFrom 被Copy的File的FileManager
      * @param fileIdFrom 被Copy的File的Id
+     * @param fileManagerTo 副本File的FileManager
      * @param fileIdTo 副本File的Id
      */
-    public JXWFile(FileManager fileManager, Id fileIdFrom, Id fileIdTo) throws ErrorCode{
-        FileManager = fileManager;
+    public JXWFile(FileManager fileManagerFrom, Id fileIdFrom, FileManager fileManagerTo, Id fileIdTo) throws ErrorCode{
+        FileManager = fileManagerTo;
         FileId = fileIdTo;
-        FileMetaPath = root + fileManager.getFileManagerName() + "/" + fileIdFrom.getName() + ".meta";
+        FileMetaPath = root + fileManagerFrom.getFileManagerName() + "/" + fileIdFrom.getName() + ".meta";
 
         //如果FileFrom存在，通过FileFrom的FileMeta获得FileBlockLists和FileEnd
         if ((new java.io.File(FileMetaPath)).exists()) {
             readMetaGetInfo();
 
-            FileMetaPath = root + fileManager.getFileManagerName() + "/" + FileId.getName() + ".meta";
+            FileMetaPath = root + fileManagerTo.getFileManagerName() + "/" + FileId.getName() + ".meta";
 
             //如果FileTo已经存在，抛出异常
             if ((new java.io.File(FileMetaPath)).exists()) {
+                System.out.println("[INFO] the file you want to copy to has been existing");
                 throw new ErrorCode(ErrorCode.FILE_EXIST);
             }
             else {//如果FileTo不存在，写入FileTo的FileMeta
@@ -125,6 +129,7 @@ public class JXWFile implements File {
             }
         }
         else {//如果FileFrom不存在，抛出异常
+            System.out.println("[INFO] the file you want to copy from does not exist");
             throw new ErrorCode(ErrorCode.FILE_NOT_EXIST);
         }
     }
@@ -191,12 +196,13 @@ public class JXWFile implements File {
             }
         }
 
-        if (!damagedBlocks.isEmpty()) {
+        if (!damagedBlocks.isEmpty()) {//有Block被损坏，删去被损坏的Block并更新FileMeta
             blockSet.removeAll(damagedBlocks);
             upDateFileMeta();
         }
 
         if (blockSet.isEmpty()) {
+            System.out.println("[INFO] the file has been damaged and you cannot attach to it anymore");
             throw new ErrorCode(ErrorCode.LOGIC_BLOCK_EMPTY);
         }
 
@@ -215,7 +221,6 @@ public class JXWFile implements File {
                     bufferPos += copyLength;
                 }
                 catch (ErrorCode e) {
-                    FileBlockLists.remove(blockSet);
                     upDateFileMeta();//更新原数据
                     throw e;
                 }
@@ -296,7 +301,7 @@ public class JXWFile implements File {
             BufferedWriter bw = new BufferedWriter(new FileWriter(getFileMetaPath()));
             bw.write("size: " + FileEnd + "\n");
             bw.write("block size: " + FileBlockSize + "\n");
-            bw.write("logic size:\n");
+            bw.write("logic block size: " + FileBlockLists.size() + "\n");
             for (Set<Block> blockSet : FileBlockLists) {
                 for (Block block : blockSet) {
                     bw.write(block.getBlockManager().getBlockManagerName() + "," + block.getIndexId().getName() + " ");
@@ -317,19 +322,21 @@ public class JXWFile implements File {
         try {
             BufferedReader br = new BufferedReader(new FileReader(FileMetaPath));
 
-            String line =  br.readLine();//读第一行获得FileSize
-            String[] args = line.split(" ");
-            FileEnd = Long.parseLong(args[1]);
+            FileEnd = Long.parseLong(br.readLine().split(" ")[1]);
+            FileBlockSize = Integer.parseInt(br.readLine().split(" ")[2]);
+            int logicBlockSize = Integer.parseInt(br.readLine().split(" ")[3]);
 
-            for (int i = 0; i < 2; i++){//跳过两行
-                br.readLine();
-            }
+            for (int i = 0; i < logicBlockSize; i++) {
+                String line = br.readLine();
+                if (line.equals("")) {
+                    System.out.println("[INFO] the file has been damaged and you cannot attach to it anymore");
+                    throw new ErrorCode(ErrorCode.LOGIC_BLOCK_EMPTY);
+                }
 
-            while ((line = br.readLine()) != null){//如果非空，读FileblockSet
                 String[] cols = line.split(" ");
                 Set<Block> blockSet = new HashSet<>();
                 for (String bmBlock : cols){
-                    args = bmBlock.split(",");
+                    String[] args = bmBlock.split(",");
                     blockSet.add(new JXWBlock(args[0], new JXWBlockId(args[1])));
                 }
                 FileBlockLists.add(blockSet);
@@ -410,9 +417,9 @@ public class JXWFile implements File {
                 FileBlockLists = new ArrayList<>();
                 int copyPos = 0;
                 int completeBlockCount = ((int)FileEnd - copyPos) / FileBlockSize;
-                System.out.println("completeBlockCount=" + completeBlockCount);
+//                System.out.println("completeBlockCount=" + completeBlockCount);
                 int remainBlockLength = ((int)FileEnd - copyPos) % FileBlockSize;
-                System.out.println(remainBlockLength);
+//                System.out.println(remainBlockLength);
 
                 for (int i = 0; i < completeBlockCount; i++) {
                     byte[] content = new byte[FileBlockSize];
