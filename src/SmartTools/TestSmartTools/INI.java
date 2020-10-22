@@ -10,10 +10,18 @@ import java.io.File;
 public class INI {
     public static final int blockManagerCount = 3;//BlockManager的个数
     public static final int fileManagerCount = 2;//FileManager的个数
+    public static final int fileManagerNum = 10;//指定生成新的FileManager的Num
+    public static final int blockManagerNum = 10;//指定生成新的FileManager的Num
 
     public static void main(String[] args) {
         //初始化指定个数个FileManager和指定个数的BlockManager
-        initiateFM();
+//        initiateFM();
+
+        //生成新的FileManager
+//        new JXWFileManager(fileManagerNum, blockManagerCount);
+
+        //生成新的BlockManager
+//        new JXWBlockManager(blockManagerNum);
     }
 
     //清空原来的BM，创建指定数目个BlockManagers
