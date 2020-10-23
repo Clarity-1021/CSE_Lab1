@@ -11,6 +11,7 @@ import java.util.Map;
 public class ErrorCode extends RuntimeException {
     public static final int IO_EXCEPTION = 1;//io异常
     public static final int CHECKSUM_CHECK_FAILED = 2;//Block的内容被损坏
+    public static final int BLOCK_NOT_EXIST = 3;//Block不存在
     public static final int INSERT_LENGTH_OVERFLOW = 4;//输入过长
     public static final int NO_MD5_ALGORITHM = 5;//没有MD5加密算法
     public static final int BLOCK_MANAGER_DIR_CONSTRUCT_FAILED = 6;//BlockManager的目录创建失败
@@ -27,6 +28,7 @@ public class ErrorCode extends RuntimeException {
     static {
         ErrorCodeMap.put(IO_EXCEPTION, "IO exception");
         ErrorCodeMap.put(CHECKSUM_CHECK_FAILED, "block checksum check failed");
+        ErrorCodeMap.put(BLOCK_NOT_EXIST, "block does not exist");
         ErrorCodeMap.put(INSERT_LENGTH_OVERFLOW, "insert length overflow");
         ErrorCodeMap.put(NO_MD5_ALGORITHM, "no MD5 algorithm");
         ErrorCodeMap.put(BLOCK_MANAGER_DIR_CONSTRUCT_FAILED, "block manager dir construct failed");

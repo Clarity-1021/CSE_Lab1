@@ -2,7 +2,6 @@ package BlockManager;
 
 import ErrorManager.ErrorCode;
 import Id.Id;
-import SmartTools.SmartTools;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.*;
@@ -63,7 +62,16 @@ public class JXWBlock implements Block {
         BlockDataPath = root + BlockManagerName + "/" + BlockId.getName() + ".data";
 
         //读Meta获得BlockContentSize和BlockCheckSum
-        readMetaGetInfo();
+        try {
+            readMetaGetInfo();
+        }
+        catch (ErrorCode e) {
+            if (e.getErrorCode() == ErrorCode.BLOCK_NOT_EXIST) {
+                System.out.println("[INFO] block does not exist");
+            }
+            throw e;
+        }
+
     }
 
     /**
@@ -72,7 +80,7 @@ public class JXWBlock implements Block {
     private void readMetaGetInfo() throws ErrorCode {
         File file = new File(BlockMetaPath);
         if (!file.exists()){
-            return;
+            throw new ErrorCode(ErrorCode.BLOCK_NOT_EXIST);
         }
 
         try {
@@ -130,19 +138,6 @@ public class JXWBlock implements Block {
 //            e.printStackTrace();
             throw new ErrorCode(ErrorCode.IO_EXCEPTION);
         }
-//        File file = new File(BlockDataPath);
-//        ByteArrayOutputStream bos = new ByteArrayOutputStream((int)file.length());
-//        try(BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
-//            byte[] buffer = new byte[(int)file.length()];
-//            int len = 0;
-//            while (-1 != (len = bis.read(buffer, 0, (int)file.length()))) {
-//                bos.write(buffer, 0, len);
-//            }
-//            result = bos.toByteArray();
-//        }
-//        catch (IOException e) {
-//            new ErrorCode(ErrorCode.IO_EXCEPTION).printStackTrace();
-//        }
 
         return result;
     }

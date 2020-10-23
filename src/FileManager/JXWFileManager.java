@@ -9,7 +9,7 @@ import java.util.Random;
 
 public class JXWFileManager implements FileManager {
 
-    String root = "./output/FileManagers/";
+    private static final String root = "./output/FileManagers/";
 
     /**
      * 新建下一个FileManager的编号
@@ -17,7 +17,7 @@ public class JXWFileManager implements FileManager {
     private static int FileManagerNumCount = 1;
 
     /**
-     * FileManager的编号
+     * FileManager的名字
      */
     private String FileManagerName;
 
@@ -30,7 +30,7 @@ public class JXWFileManager implements FileManager {
         FileManagerName = "FM-" + FileManagerNumCount++;
         BlockManagerCount = blockManagerCount;
 
-        //创建BlockManager的目录
+        //创建FileManager的目录
         java.io.File file = new java.io.File(root + FileManagerName);
         if (!file.exists()){//目录不存在
             if (!file.mkdir()){//创建目录不成功，抛出异常
@@ -43,11 +43,24 @@ public class JXWFileManager implements FileManager {
         FileManagerName = "FM-" + fileManagerNum;
         BlockManagerCount = blockManagerCount;
 
-        //创建BlockManager的目录
+        //创建FileManager的目录
         java.io.File file = new java.io.File(root + FileManagerName);
         if (!file.exists()){//目录不存在
             if (!file.mkdir()){//创建目录不成功，抛出异常
                 throw new ErrorCode(ErrorCode.FILE_MANAGER_DIR_CONSTRUCT_FAILED);
+            }
+        }
+    }
+
+    public JXWFileManager(String fileManagerName, int blockManagerCount) throws ErrorCode{
+        FileManagerName = fileManagerName;
+        BlockManagerCount = blockManagerCount;
+
+        //创建FileManager的目录
+        java.io.File file = new java.io.File(root + FileManagerName);
+        if (!file.exists()){//目录不存在
+            if (!file.mkdir()){//创建目录不成功，记录在日志里面
+                throw new ErrorCode(ErrorCode.BLOCK_MANAGER_DIR_CONSTRUCT_FAILED);
             }
         }
     }

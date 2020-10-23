@@ -7,10 +7,6 @@ public class JXWFileId implements Id {
      * File的Name
      */
     private String FileName;
-    /**
-     * File的meta文件的路径
-     */
-    private String FileMetaPath;
 
     public JXWFileId(String fileName) {
         FileName = fileName;
