@@ -15,7 +15,7 @@ public class INI {
 
     public static void main(String[] args) {
         //初始化指定个数个FileManager和指定个数的BlockManager
-//        initiateFM();
+        initiateFM();
 
         //生成新的FileManager
 //        new JXWFileManager(fileManagerNum, blockManagerCount);
